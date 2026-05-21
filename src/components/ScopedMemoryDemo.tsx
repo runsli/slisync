@@ -6,11 +6,16 @@ import {
   useMemoryGraph,
   type AgentActivityPayload,
 } from "@slisync/sync-sdk";
-import type { MemoryScope, PresenceMember } from "@slisync/sync-schema";
+import type {
+  GraphActivityPayload,
+  MemoryScope,
+  PresenceMember,
+} from "@slisync/sync-schema";
 import { DemoAgentPushHint } from "./demo-agent-push-hint";
 import { MemoryChunkEditor } from "./MemoryChunkEditor";
 import { MemoryGraphPanel } from "./MemoryGraphPanel";
 import { MemoryScopeBar } from "./MemoryScopeBar";
+import { TaskBoardPanel } from "./TaskBoardPanel";
 import {
   demoSeedStorageKey,
   demoWelcomeDismissedKey,
@@ -32,7 +37,10 @@ export type ScopedMemoryDemoProps = {
   notifyGraphActivity?: (summary: string) => void;
   presenceMembers?: PresenceMember[];
   lastAgentActivity?: AgentActivityPayload | null;
+  lastGraphActivity?: GraphActivityPayload | null;
 };
+
+type DemoTab = "memory" | "tasks";
 
 /** Primary demo shell: scoped memory graph navigation + chunk editor. */
 export function ScopedMemoryDemo({
@@ -43,6 +51,7 @@ export function ScopedMemoryDemo({
   notifyGraphActivity,
   presenceMembers = [],
   lastAgentActivity = null,
+  lastGraphActivity = null,
 }: ScopedMemoryDemoProps) {
   const { graph, snapshot, ready } = useMemoryGraph({
     graphId,
@@ -57,6 +66,8 @@ export function ScopedMemoryDemo({
   const [layoutMode, setLayoutMode] = useState<GraphLayoutMode>("tree");
   const [editorFocusToken, setEditorFocusToken] = useState(0);
   const [welcomeDismissed, setWelcomeDismissed] = useState(false);
+  const [activeTab, setActiveTab] = useState<DemoTab>("memory");
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -212,6 +223,7 @@ export function ScopedMemoryDemo({
             <li>在上方选择或确认工作区 / 会话（默认 ws-demo / sess-demo）</li>
             <li>左侧选 chunk 或点「+ 新建 memory_chunk」，在右侧编辑标题与内容</li>
             <li>再开一浏览器窗口同地址，或复制下方 Agent 命令在终端执行</li>
+            <li>切换「任务看板」Tab 查看 Agent 任务进度（可先运行 npm run task:seed）</li>
           </ol>
           <div className="mt-3">
             <DemoAgentPushHint scope={scope} compact />
@@ -219,7 +231,40 @@ export function ScopedMemoryDemo({
         </div>
       ) : null}
 
-      {lastAgentActivity ? (
+      <div
+        className="inline-flex rounded-lg border border-violet-200/80 p-0.5 dark:border-violet-800/60"
+        role="tablist"
+        aria-label="Demo 主视图"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "memory"}
+          onClick={() => setActiveTab("memory")}
+          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "memory"
+              ? "bg-violet-600 text-white dark:bg-violet-500"
+              : "text-violet-800 hover:bg-violet-100/80 dark:text-violet-200 dark:hover:bg-violet-950/60"
+          }`}
+        >
+          记忆
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeTab === "tasks"}
+          onClick={() => setActiveTab("tasks")}
+          className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+            activeTab === "tasks"
+              ? "bg-amber-600 text-white dark:bg-amber-600"
+              : "text-amber-900 hover:bg-amber-100/80 dark:text-amber-100 dark:hover:bg-amber-950/60"
+          }`}
+        >
+          任务看板
+        </button>
+      </div>
+
+      {activeTab === "memory" && lastAgentActivity ? (
         <div
           role="status"
           className="rounded-lg border border-violet-300 bg-violet-100/80 px-3 py-2 text-sm text-violet-950 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100"
@@ -232,7 +277,7 @@ export function ScopedMemoryDemo({
           <p className="mt-1 text-xs opacity-80">
             当前 scope {scope.workspaceId}
             {scope.sessionId ? ` / ${scope.sessionId}` : ""} — 若含 graphOps，左侧图与右侧
-            chunk 会随 CRDT 更新；message 历史见底部「旧版共享字段」折叠区。
+            chunk 会随 CRDT 更新。任务相关活动请切换到「任务看板」Tab。
           </p>
         </div>
       ) : null}
@@ -245,57 +290,86 @@ export function ScopedMemoryDemo({
         syncReady={syncReady}
       />
 
-      {isEmpty ? (
-        <div className="space-y-3 rounded-lg border border-dashed border-zinc-300 bg-white/60 p-6 text-center dark:border-zinc-700 dark:bg-zinc-900/30">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400">
-            尚无 workspace / session / memory_chunk 节点
-          </p>
-          <p className="text-xs text-zinc-500">
-            连接同步后将自动写入演示数据（每个浏览器会话仅一次）；也可手动点击下方按钮。
-          </p>
-          <button
-            type="button"
-            disabled={!ready || !syncReady}
-            onClick={seedScoped}
-            className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-40"
-          >
-            初始化演示工作区
-          </button>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
-          <div className="min-h-[16rem] rounded-lg border border-zinc-200 bg-white/50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
-            <MemoryGraphPanel
-              nodes={activeNodes}
-              edges={activeEdges}
-              scope={scope}
-              syncReady={syncReady}
-              ready={ready}
-              selectedId={selectedId}
-              rootId={rootId}
-              layoutMode={layoutMode}
-              onSelectNode={handleSelectNode}
-              onLayoutModeChange={setLayoutMode}
-              onAddChunk={addChunk}
-              onSeed={seedScoped}
-            />
-          </div>
-          <div className="min-h-[16rem] rounded-lg border border-zinc-200 bg-white/50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
-              记忆块编辑
+      {activeTab === "memory" ? (
+        isEmpty ? (
+          <div className="space-y-3 rounded-lg border border-dashed border-zinc-300 bg-white/60 p-6 text-center dark:border-zinc-700 dark:bg-zinc-900/30">
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">
+              尚无 workspace / session / memory_chunk 节点
             </p>
-            <MemoryChunkEditor
-              node={selectedNode}
-              graph={graph}
-              ready={ready}
-              syncReady={syncReady}
-              focusToken={editorFocusToken}
-            />
+            <p className="text-xs text-zinc-500">
+              连接同步后将自动写入演示数据（每个浏览器会话仅一次）；也可手动点击下方按钮。
+            </p>
+            <button
+              type="button"
+              disabled={!ready || !syncReady}
+              onClick={seedScoped}
+              className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-40"
+            >
+              初始化演示工作区
+            </button>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6">
+            <div className="min-h-[16rem] rounded-lg border border-zinc-200 bg-white/50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+              <MemoryGraphPanel
+                nodes={activeNodes}
+                edges={activeEdges}
+                scope={scope}
+                syncReady={syncReady}
+                ready={ready}
+                selectedId={selectedId}
+                rootId={rootId}
+                layoutMode={layoutMode}
+                onSelectNode={handleSelectNode}
+                onLayoutModeChange={setLayoutMode}
+                onAddChunk={addChunk}
+                onSeed={seedScoped}
+              />
+            </div>
+            <div className="min-h-[16rem] rounded-lg border border-zinc-200 bg-white/50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500">
+                记忆块编辑
+              </p>
+              <MemoryChunkEditor
+                node={selectedNode}
+                graph={graph}
+                ready={ready}
+                syncReady={syncReady}
+                focusToken={editorFocusToken}
+              />
+            </div>
+          </div>
+        )
+      ) : (
+        <TaskBoardPanel
+          graph={graph}
+          snapshot={snapshot}
+          scope={scope}
+          syncReady={syncReady}
+          ready={ready}
+          selectedTaskId={selectedTaskId}
+          onSelectTask={setSelectedTaskId}
+          onStatusChange={() =>
+            notifyGraphActivity?.("updated task status from board")
+          }
+          lastAgentActivity={lastAgentActivity}
+          lastGraphActivity={lastGraphActivity}
+        />
       )}
 
-      <DemoAgentPushHint scope={scope} />
+      <div className="space-y-2">
+        <DemoAgentPushHint scope={scope} />
+        <p className="text-xs text-violet-800/80 dark:text-violet-200/80">
+          任务演示：终端运行{" "}
+          <code className="rounded bg-violet-100/80 px-1 font-mono dark:bg-violet-950">
+            npm run task:seed
+          </code>
+          ，在「任务看板」Tab 查看；也可用{" "}
+          <code className="rounded bg-violet-100/80 px-1 font-mono dark:bg-violet-950">
+            agent:push --task-title &quot;…&quot; --status in_progress
+          </code>
+        </p>
+      </div>
     </section>
   );
 }

@@ -6,6 +6,7 @@ import {
   createSyncStore,
   getSyncEndpoint,
   useSync,
+  type AgentActivityPayload,
   type SyncStrategy,
 } from "@slisync/sync-sdk";
 import { ScopedMemoryDemo } from "./ScopedMemoryDemo";
@@ -52,6 +53,28 @@ function statusColor(status: string) {
     default:
       return "bg-zinc-400";
   }
+}
+
+const DEMO_TASK_SUMMARY_HINTS = [
+  "upsertTask",
+  "parseTaskData",
+  "scoped memory",
+  "验收",
+  "实现",
+  "定稿",
+];
+
+function isTaskGraphSummary(summary: string): boolean {
+  if (/\btask\b/i.test(summary) || summary.includes("任务")) return true;
+  return DEMO_TASK_SUMMARY_HINTS.some((hint) => summary.includes(hint));
+}
+
+function isTaskAgentActivity(activity: AgentActivityPayload): boolean {
+  const { action, summary } = activity.entry;
+  return (
+    action.includes("task") ||
+    /task|任务|seed_tasks|update_task/i.test(summary)
+  );
 }
 
 function conflictLabel(reason: string) {
@@ -175,21 +198,41 @@ export function SyncDemo() {
       {lastAgentActivity ? (
         <div
           role="status"
-          className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-900 dark:border-violet-900/50 dark:bg-violet-950/40 dark:text-violet-200"
+          className={`rounded-lg border px-3 py-2 text-sm ${
+            isTaskAgentActivity(lastAgentActivity)
+              ? "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100"
+              : "border-violet-200 bg-violet-50 text-violet-900 dark:border-violet-900/50 dark:bg-violet-950/40 dark:text-violet-200"
+          }`}
         >
-          Agent 活动 ·{" "}
+          {isTaskAgentActivity(lastAgentActivity) ? (
+            <span className="font-semibold">任务变更 · </span>
+          ) : (
+            <span>Agent 活动 · </span>
+          )}
           <span className="font-medium">{lastAgentActivity.entry.agentId}</span> ·{" "}
           {lastAgentActivity.entry.action}: {lastAgentActivity.entry.summary}
-          <span className="text-xs opacity-75">（详见下方共享记忆区）</span>
+          <span className="text-xs opacity-75">
+            {isTaskAgentActivity(lastAgentActivity)
+              ? "（打开「任务看板」Tab 查看）"
+              : "（详见下方「记忆」Tab）"}
+          </span>
         </div>
       ) : null}
 
       {lastGraphActivity ? (
         <div
           role="status"
-          className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-200"
+          className={`rounded-lg border px-3 py-2 text-sm ${
+            isTaskGraphSummary(lastGraphActivity.summary)
+              ? "border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-800 dark:bg-amber-950/50 dark:text-amber-100"
+              : "border-sky-200 bg-sky-50 text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-200"
+          }`}
         >
-          记忆图 / chunk 变更 ·{" "}
+          {isTaskGraphSummary(lastGraphActivity.summary) ? (
+            <span className="font-semibold">任务变更 · </span>
+          ) : (
+            <span>记忆图 / chunk 变更 · </span>
+          )}
           <span className="font-medium">{lastGraphActivity.actorId}</span>
           {lastGraphActivity.source === "agent"
             ? "（Agent）"
@@ -197,6 +240,9 @@ export function SyncDemo() {
               ? "（用户）"
               : null}
           ：{lastGraphActivity.summary}
+          {isTaskGraphSummary(lastGraphActivity.summary) ? (
+            <span className="text-xs opacity-75">（「任务看板」Tab）</span>
+          ) : null}
         </div>
       ) : null}
 
@@ -239,6 +285,7 @@ export function SyncDemo() {
           notifyGraphActivity={notifyGraphActivity}
           presenceMembers={presenceMembers}
           lastAgentActivity={lastAgentActivity}
+          lastGraphActivity={lastGraphActivity}
         />
       ) : null}
 

@@ -193,7 +193,14 @@ npm run agent:push -- --action summarize --append " [from agent]"
 | 0 | `TaskData`、`parseTaskData`、策略默认、设计文档 | SDK 辅助方法、Demo UI |
 | 1 | `upsertTask`、`updateTaskStatus`、`filterTasksByScope`、`buildDemoTaskOps` | Demo UI、`sync:task-*` 事件 |
 | 2 | `task:seed` CLI、服务端策略默认、`agent:push --task-title` | Demo UI、`sync:task-*` 事件 |
-| 3+ | Demo / 活动流集成（规划） | 仅 IndexedDB 的任务表 |
+| 3 | Demo **任务看板** Tab、改 status、任务向 toast | 拖拽排序、`GraphActivityPayload.nodeId` |
+| 4+ | 活动流 `nodeId` 自动定位（follow-up） | 仅 IndexedDB 的任务表 |
+
+### Demo（Phase 3）
+
+`npm run dev` 后打开 Demo → **任务看板** Tab；执行 `npm run task:seed` 加载分栏任务。在详情区改 status，第二窗口验证同步。Agent 推送任务时顶部 toast 显示 **任务变更**（`seed_tasks`、`update_task` 或匹配图摘要）。
+
+**Follow-up：** 可选在 `GraphActivityPayload` 增加 `nodeId`，Agent 改任务时自动滚动定位（Phase 3 未做）。
 
 ---
 
