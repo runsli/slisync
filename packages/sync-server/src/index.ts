@@ -27,6 +27,7 @@ export { attachAgentServer } from "./attach-agent-server";
 export type { AttachAgentServerDeps } from "./attach-agent-server";
 export { attachCrdtServer } from "./attach-crdt-server";
 export { createCrdtRoomStore } from "./crdt-room-store";
+export { createInMemoryCrdtPersistence } from "./crdt-persistence";
 export { conflictReasonForPatch, isStaleWrite } from "./conflict";
 export { attachSyncServer } from "./attach-sync-server";
 export type { AttachSyncServerOptions } from "./attach-sync-server";

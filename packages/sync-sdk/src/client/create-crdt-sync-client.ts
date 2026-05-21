@@ -63,6 +63,8 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
   private joinRetryTimer: ReturnType<typeof setInterval> | null = null;
   private snapshotPersistTimer: ReturnType<typeof setTimeout> | null = null;
   private synced = false;
+  /** CRDT_SYNC + join ack while skipping server overwrite after local hydrate. */
+  private skipIncomingJoinSnapshots = 0;
   private readonly localStore: LocalRoomStore | null;
   private readonly outbox: CrdtOutbox;
   private readonly options: CrdtSyncClientOptions<T>;
@@ -82,6 +84,7 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
     const { store, defaultState } = this.options;
 
     this.synced = false;
+    this.skipIncomingJoinSnapshots = 0;
     store.getState().setSyncReady(false);
     store.getState().setStatus("connecting");
     store.getState().setLocalRestored(null);
@@ -189,6 +192,7 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
     }
 
     if (record?.docSnapshot) {
+      this.skipIncomingJoinSnapshots = 2;
       try {
         applyServerSnapshotToDoc(this.doc, record.docSnapshot);
       } catch (err) {
@@ -361,6 +365,18 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
 
     const { store } = this.options;
     try {
+      if (
+        this.skipIncomingJoinSnapshots > 0 &&
+        store.getState().localRestored
+      ) {
+        this.skipIncomingJoinSnapshots -= 1;
+        if (!this.synced) {
+          this.markSynced();
+        }
+        store.setState({ version: store.getState().version + 1 });
+        return;
+      }
+
       applyServerSnapshotToDoc(this.doc, encoded);
       this.markSynced();
       store.setState({ version: store.getState().version + 1 });
@@ -381,6 +397,7 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
       ensureMemoryGraphDoc(this.doc, this.options.roomId);
     }
     this.mergePendingMessageEdits();
+    this.publishLocalDocIfRestored();
     this.flushOutbox();
     this.emitPresenceJoin();
   }
@@ -472,14 +489,30 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
     this.socket.emit(SYNC_EVENTS.PRESENCE_LEAVE, {});
   }
 
+  /** After local hydrate, push CRDT state so the room learns offline edits. */
+  private publishLocalDocIfRestored() {
+    const { store, roomId } = this.options;
+    const socket = this.socket;
+    if (!this.doc || !socket?.connected || !this.synced) return;
+    if (!store.getState().localRestored) return;
+
+    const encoded = encodeUpdate(Y.encodeStateAsUpdate(this.doc));
+    socket.emit(SYNC_EVENTS.CRDT_UPDATE, { roomId, update: encoded });
+  }
+
   private mergePendingMessageEdits() {
     if (!this.doc) return;
     const { store } = this.options;
-    const uiMessage = (store.getState().data as SharedMemoryState).message;
+    const data = store.getState().data as SharedMemoryState;
     const docMessage = readSharedMemoryState(this.doc).message;
-    if (uiMessage !== docMessage) {
-      updateMessage(this.doc, docMessage, uiMessage);
+    if (data.message === docMessage) return;
+
+    if (store.getState().localRestored) {
+      store.setState({ data: { ...data, message: docMessage } as T });
+      return;
     }
+
+    updateMessage(this.doc, docMessage, data.message);
   }
 
   private ensureClientId() {

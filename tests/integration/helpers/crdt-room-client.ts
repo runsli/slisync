@@ -11,7 +11,9 @@ import {
 } from "@slisync/sync-sdk/protocol";
 import type { MemoryGraphSnapshot } from "@slisync/sync-schema";
 
-const DEFAULT_TIMEOUT_MS = 12_000;
+import { integrationTimeoutMs } from "./sync-test-utils";
+
+const DEFAULT_TIMEOUT_MS = integrationTimeoutMs();
 
 export type CrdtRoomClient = {
   doc: Y.Doc;

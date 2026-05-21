@@ -14,6 +14,7 @@ import {
   updateMessage,
 } from "@slisync/sync-sdk/crdt/shared-memory-doc";
 import { encodeUpdate } from "@slisync/sync-sdk/crdt";
+import { integrationTimeoutMs, waitFor } from "./helpers/sync-test-utils";
 import { startTestSyncServer } from "./helpers/test-server";
 
 const DEFAULT_STATE = {
@@ -25,32 +26,10 @@ function uniqueRoom(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function waitFor(
-  predicate: () => boolean,
-  timeoutMs = 12_000,
-  intervalMs = 50,
-): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const started = Date.now();
-    const tick = () => {
-      if (predicate()) {
-        resolve();
-        return;
-      }
-      if (Date.now() - started >= timeoutMs) {
-        reject(new Error("waitFor timeout"));
-        return;
-      }
-      setTimeout(tick, intervalMs);
-    };
-    tick();
-  });
-}
-
 async function waitForPersistedSnapshot(
   store: ReturnType<typeof createNoopLocalRoomStore>,
   roomId: string,
-  timeoutMs = 12_000,
+  timeoutMs = integrationTimeoutMs(),
 ) {
   const started = Date.now();
   while (Date.now() - started < timeoutMs) {
@@ -100,6 +79,7 @@ describe("CRDT local persistence", () => {
 
     try {
       client.connect();
+      await waitFor(() => store.getState().localRestored === true);
       await waitFor(() => store.getState().data.message === offlineMessage);
       assert.equal(
         readSharedMemoryState(client.getDocument()!).message,

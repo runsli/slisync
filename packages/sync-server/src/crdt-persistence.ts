@@ -8,9 +8,24 @@ const REDIS_KEY_PREFIX = "sync:crdt:";
 type CrdtDatabase = Record<string, string>;
 
 export interface CrdtPersistence {
-  readonly backend: "redis" | "file";
+  readonly backend: "redis" | "file" | "memory";
   load(roomId: string): Promise<Uint8Array | null>;
   save(roomId: string, update: Uint8Array): Promise<void>;
+}
+
+/** In-process CRDT store for tests (avoids file rename races under parallel updates). */
+export function createInMemoryCrdtPersistence(): CrdtPersistence {
+  const db = new Map<string, string>();
+  return {
+    backend: "memory",
+    async load(roomId) {
+      const encoded = db.get(roomId);
+      return encoded ? decodeUpdate(encoded) : null;
+    },
+    async save(roomId, update) {
+      db.set(roomId, encodeUpdate(update));
+    },
+  };
 }
 
 export function createCrdtFilePersistence(filePath: string): CrdtPersistence {

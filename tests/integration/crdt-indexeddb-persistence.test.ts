@@ -20,6 +20,7 @@ import { createCrdtRoomClient } from "./helpers/crdt-room-client";
 import {
   clearSlisyncDb,
   delay,
+  integrationTimeoutMs,
   uniqueRoom,
   waitFor,
 } from "./helpers/sync-test-utils";
@@ -83,12 +84,31 @@ describe("CRDT IndexedDB persistence", () => {
       await reader.join();
 
       client.connect();
-      await waitFor(() => store.getState().syncReady);
-      await waitFor(() => store.getState().outboxSize === 0);
-      await waitFor(() => store.getState().data.message === offlineMessage);
+      await waitFor(
+        () => store.getState().syncReady,
+        integrationTimeoutMs(20_000),
+        50,
+        "client syncReady",
+      );
+      await waitFor(
+        () => store.getState().outboxSize === 0,
+        integrationTimeoutMs(20_000),
+        50,
+        "client outbox drained",
+      );
+      await waitFor(
+        () => store.getState().data.message === offlineMessage,
+        integrationTimeoutMs(20_000),
+        50,
+        "client message",
+      );
 
+      await delay(150);
       await waitFor(
         () => readSharedMemoryState(reader.doc).message === offlineMessage,
+        integrationTimeoutMs(20_000),
+        50,
+        "reader message",
       );
       assert.equal(readSharedMemoryState(reader.doc).message, offlineMessage);
     } finally {

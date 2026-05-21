@@ -32,4 +32,5 @@ describe("applyServerSnapshotToDoc", () => {
     local.destroy();
     remote.destroy();
   });
+
 });

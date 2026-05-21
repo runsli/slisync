@@ -13,6 +13,7 @@ import { createAuditPersistence } from "./audit-persistence";
 import { createGraphHttpHandler } from "./graph-http";
 import { handleSyncCapabilitiesGet } from "./sync-capabilities-http";
 import { SYNC_PROTOCOL_VERSION } from "@slisync/sync-schema";
+import type { CrdtRoomStore } from "./crdt-room-store";
 import { createPersistence, type RoomPersistence } from "./persistence";
 import {
   attachSocketRedisAdapter,
@@ -24,6 +25,8 @@ export interface CreateSyncHttpServerOptions {
   host?: string;
   defaultState?: SharedMemoryState;
   persistence?: RoomPersistence;
+  /** Override CRDT room store (tests use in-memory persistence). */
+  crdtRoomStore?: CrdtRoomStore;
 }
 
 export interface SyncHttpServer {
@@ -104,6 +107,7 @@ export function createSyncHttpServer(
   const { crdtRoomStore } = attachCrdtServer(io, defaultState, {
     auth,
     auditStore,
+    roomStore: options.crdtRoomStore,
   });
   const { roomStore, crdtAuthority } = attachSyncServer(io, defaultState, {
     persistence,

@@ -61,6 +61,9 @@ export class CrdtRoomStore {
   }
 }
 
-export function createCrdtRoomStore(defaultState: SharedMemoryState) {
-  return new CrdtRoomStore(createCrdtPersistence(), defaultState);
+export function createCrdtRoomStore(
+  defaultState: SharedMemoryState,
+  persistence?: import("./crdt-persistence").CrdtPersistence,
+) {
+  return new CrdtRoomStore(persistence ?? createCrdtPersistence(), defaultState);
 }

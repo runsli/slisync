@@ -1,5 +1,10 @@
 import type { Server, Socket } from "socket.io";
-import { decodeUpdate, encodeUpdate } from "@slisync/sync-sdk/crdt";
+import {
+  captureStateVector,
+  decodeUpdate,
+  encodeIncrementalUpdate,
+  encodeUpdate,
+} from "@slisync/sync-sdk/crdt";
 import { readMemoryGraphSnapshot } from "@slisync/sync-sdk/graph";
 import { emitGraphActivityIfSnapshotChanged } from "./emit-graph-activity-on-crdt";
 import {
@@ -112,6 +117,7 @@ export function attachCrdtServer(
         try {
           socket.join(roomId);
           const doc = await store.getOrCreate(roomId);
+          const stateVectorBefore = captureStateVector(doc);
           const graphBefore = readMemoryGraphSnapshot(doc);
           await store.applyUpdate(roomId, decodeUpdate(encoded));
           const graphAfter = readMemoryGraphSnapshot(
@@ -124,7 +130,12 @@ export function attachCrdtServer(
             graphAfter,
             auditStore,
           );
-          socket.to(roomId).emit(SYNC_EVENTS.CRDT_UPDATE, { roomId, update: encoded });
+          const broadcast = encodeUpdate(
+            encodeIncrementalUpdate(doc, stateVectorBefore),
+          );
+          socket
+            .to(roomId)
+            .emit(SYNC_EVENTS.CRDT_UPDATE, { roomId, update: broadcast });
         } catch (err) {
           console.error("[sync:crdt] update failed:", err);
         }

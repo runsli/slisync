@@ -2,14 +2,20 @@
 
 import { createIndexedDBRoomStore } from "@slisync/sync-sdk";
 
+/** Longer waits on CI runners where socket/IDB hydration can be slower. */
+export function integrationTimeoutMs(localMs = 12_000) {
+  return process.env.CI ? Math.max(localMs, 25_000) : localMs;
+}
+
 export function uniqueRoom(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export function waitFor(
   predicate: () => boolean,
-  timeoutMs = 12_000,
+  timeoutMs = integrationTimeoutMs(),
   intervalMs = 50,
+  label = "condition",
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const started = Date.now();
@@ -19,7 +25,7 @@ export function waitFor(
         return;
       }
       if (Date.now() - started >= timeoutMs) {
-        reject(new Error("waitFor timeout"));
+        reject(new Error(`waitFor timeout: ${label}`));
         return;
       }
       setTimeout(tick, intervalMs);

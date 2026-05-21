@@ -1,5 +1,7 @@
 import type { AddressInfo } from "node:net";
 import {
+  createCrdtRoomStore,
+  createInMemoryCrdtPersistence,
   createMemoryPersistence,
   createSyncHttpServer,
   type SyncHttpServer,
@@ -18,10 +20,15 @@ export async function startTestSyncServer(
 ): Promise<TestSyncServer> {
   return withAuthEnv(auth, async () => {
     const persistence = createMemoryPersistence();
+    const crdtRoomStore = createCrdtRoomStore(
+      { message: "Hello from shared memory", counter: 0, agentLog: [] },
+      createInMemoryCrdtPersistence(),
+    );
     const sync = createSyncHttpServer({
       port: 0,
       host: "127.0.0.1",
       persistence,
+      crdtRoomStore,
     });
 
     await sync.listen();
