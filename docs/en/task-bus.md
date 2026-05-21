@@ -1,10 +1,10 @@
-# Room task bus (Phase 0)
+# Room task bus
 
 [中文](../zh/task-bus.md)
 
-This document defines the **graph-native task model** for Slisync rooms: authoritative task state lives in the shared Memory Graph as `kind: "task"` nodes, not in a separate IndexedDB task table or new socket events.
+Slisync **room-level, graph-native** task bus: authoritative task state lives in the shared Memory Graph as `kind: "task"` nodes, on the same `Y.Doc` / CRDT path as scoped memory.
 
-Related: [demo-scoped-memory.md](./demo-scoped-memory.md) · [local-first.md](./local-first.md) · [packages/README.md](../../packages/README.md)
+Related: [demo-scoped-memory.md](./demo-scoped-memory.md) (Memory tab) · [local-first.md](./local-first.md) · [ROADMAP.md](./ROADMAP.md) · [packages/README.md](../../packages/README.md)
 
 ---
 
@@ -180,9 +180,47 @@ npm run agent:push -- --action summarize --append " [from agent]"
 
 Environment (same as `graph:seed`): `SYNC_URL`, `SYNC_ROOM`, `SYNC_AGENT_ID`. See `.env.example` for `SYNC_AGENT_GRAPH_KINDS` (must include `task` when overriding).
 
-### Policy rejection (manual check)
+---
 
-With server env restricting kinds (no `task`), `npm run task:seed` should fail with a readable error, e.g. `node kind not allowed: task`.
+## Five-minute manual acceptance (Demo)
+
+Prerequisites: **Node ≥ 20.9**, terminal 1 running `npm run dev` with `Local: http://localhost:3000`.
+
+| Step | Action | Expected |
+|------|--------|----------|
+| 1 | Open Demo, strategy **CRDT** | Scoped Memory panel; default **Memory** tab |
+| 2 | Confirm ScopeBar: `ws-demo` / `sess-demo` | Matches `graph:seed` / `task:seed` |
+| 3 | Switch to **任务看板** (Task board) tab | Empty room prompts `npm run task:seed` |
+| 4 | Terminal 2: `npm run task:seed` | `[task:seed] ok room=example-room ...` |
+| 5 | Task board shows 待办 / 进行中 / 已完成 columns | ≥3 Chinese demo tasks |
+| 6 | Select a card; change status in detail panel | Updates immediately on this window |
+| 7 | Second browser window, same URL, **Task board** tab | Same status within seconds (CRDT) |
+| 8 | Terminal 2: `npm run agent:push -- --task-title "Review export pipeline" --status in_progress` | Amber **任务变更** toast; in-tab activity hint (no need to expand legacy agentLog) |
+| 9 | (Optional) **Memory** tab still edits chunks per [demo-scoped-memory.md](./demo-scoped-memory.md) | Both tabs coexist |
+
+---
+
+## Troubleshooting
+
+| Symptom | What to do |
+|---------|------------|
+| `[task:seed] failed` / connection error | Start `npm run dev` first; `SYNC_URL` should match dev (default `http://127.0.0.1:3000`) |
+| `node kind not allowed: task` | Server `SYNC_AGENT_GRAPH_KINDS` omits `task`; restore defaults in `.env.example` |
+| Empty task board | Run `npm run task:seed`; scope must be `ws-demo` / `sess-demo` (not `ws-task-test`, used only in automation) |
+| Second window status out of sync | Same URL and room (`example-room`); wait for `connected` / `syncReady` |
+| No task feedback from `agent:push` | Use `--task-title` and `--status` (`todo` \| `in_progress` \| `done`); or `task:seed` then watch graph activity |
+| Looking for IndexedDB task store | **None** — tasks are graph nodes only; IndexedDB holds room-level CRDT snapshots |
+
+---
+
+## Explicitly out of scope
+
+| Not building | Notes |
+|--------------|-------|
+| Workflow engine | Vision 11 — no triggers or DAG orchestration ([ROADMAP.md](./ROADMAP.md)) |
+| Separate DB task table | No IndexedDB / PostgreSQL task rows; authority is `kind: "task"` graph nodes |
+| `sync:task-*` socket events | Tasks use `sync:crdt-update` / `sync:agent-push` + `graphOps` |
+| `export:chunks` for tasks | Export pipeline is `memory_chunk` Markdown only |
 
 ---
 
@@ -193,15 +231,11 @@ With server env restricting kinds (no `task`), `npm run task:seed` should fail w
 | 0 | `TaskData`, `parseTaskData`, policy defaults, design docs | SDK helpers, Demo UI |
 | 1 | `upsertTask`, `updateTaskStatus`, `filterTasksByScope`, `buildDemoTaskOps` | Demo UI, `sync:task-*` events |
 | 2 | `task:seed` CLI, server policy defaults, `agent:push --task-title` | Demo UI, `sync:task-*` events |
-| 3 | Demo **任务看板** Tab, status edits, task-aware toasts | Drag reorder, `GraphActivityPayload.nodeId` |
+| 3 | Demo task board tab, status edits, task-aware toasts | Drag reorder, `GraphActivityPayload.nodeId` |
 | 4 | Integration tests A/B (`task-bus-sync.test.ts`) | IndexedDB-only task tables |
-| 5+ | Activity `nodeId` auto-focus (follow-up) | — |
+| 5 | This doc, ROADMAP vision 10 ✅, README / Demo cross-links | Workflow engine, separate task DB |
 
-### Demo (Phase 3)
-
-With `npm run dev`, open the Demo → **任务看板** tab. Run `npm run task:seed` to load demo columns (待办 / 进行中 / 已完成). Edit status in the detail panel; open a second browser window to verify CRDT sync. Top toasts highlight **任务变更** when Agent pushes tasks (`seed_tasks`, `update_task`, or matching graph summaries).
-
-**Follow-up:** optional `GraphActivityPayload.nodeId` for scroll-to-card on Agent edits (not in Phase 3).
+**Follow-up:** optional `GraphActivityPayload.nodeId` to scroll to a task card.
 
 ---
 

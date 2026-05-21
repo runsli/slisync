@@ -47,7 +47,7 @@ This document maps the **12-phase product vision** in [VISION.md](./VISION.md) t
 
 | Vision | Theme | Status | In this repo |
 |--------|-------|--------|--------------|
-| **10** | Multi-Agent | 🟡 | `sync:agent-push`, activity, **P2-8 Presence**, graph activity |
+| **10** | Multi-Agent | ✅ | Room task bus, `sync:agent-push`, **P2-8 Presence**, graph activity — [task-bus.md](./task-bus.md) |
 | **11** | Workflow Engine | ⬜ | No workflow / trigger product layer |
 | **12** | AI Runtime / AI OS | ⬜ | Long-term vision |
 
@@ -72,10 +72,11 @@ Parallel **engineering IDs** (commits / comments):
 
 1. Motivation → [VISION.md](./VISION.md)
 2. Scoped memory Demo → [demo-scoped-memory.md](./demo-scoped-memory.md)
-3. Aonote export → [export.md](./export.md) (M0–M2)
-4. Run app → [README.md](../../README.md)
-5. Protocol & API → [packages/README.md](../../packages/README.md)
-6. Config → [.env.example](../../.env.example)
+3. Room task bus → [task-bus.md](./task-bus.md) (`task:seed`, task board tab)
+4. Aonote export → [export.md](./export.md) (M0–M2)
+5. Run app → [README.md](../../README.md)
+6. Protocol & API → [packages/README.md](../../packages/README.md)
+7. Config → [.env.example](../../.env.example)
 
 ---
 
@@ -84,7 +85,7 @@ Parallel **engineering IDs** (commits / comments):
 1. ✅ **Aonote export M0–M2** — [export.md](./export.md)
 2. ✅ **Vision 2** — IndexedDB + unified outbox — [local-first.md](./local-first.md)
 3. ✅ **Vision 7** — Demo centered on scoped memory — [demo-scoped-memory.md](./demo-scoped-memory.md)
-4. **Vision 10** — Room-level agent task bus / events
+4. ~~**Vision 10** — Room-level agent task bus~~ — done; see [task-bus.md](./task-bus.md)
 5. **Vision 4** — Optional PostgreSQL / HTTP export (M4)
 
 **Not planned here:** vision 9 (semantic search), Web3, chat super-app.

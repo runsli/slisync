@@ -10,6 +10,7 @@ npm workspace **`@slisync/*`** implements **Slisync** (room realtime sync + Memo
 | [docs/zh/VISION.md](../docs/zh/VISION.md) | 产品愿景（中文） |
 | [docs/en/ROADMAP.md](../docs/en/ROADMAP.md) | Roadmap |
 | [docs/en/demo-scoped-memory.md](../docs/en/demo-scoped-memory.md) | Scoped memory Demo walkthrough |
+| [docs/en/task-bus.md](../docs/en/task-bus.md) | Room task board, `task:seed`, agent task push |
 | [README.md](../README.md) | Quick start |
 
 ---
@@ -45,7 +46,7 @@ Engineering IDs used in commits and comments. Product [12-phase vision](../docs/
 | **8** | ✅ | `SYNC_*` auth, `validateGraphOps`, `sync:error` |
 | **9** | ✅ | `sync:graph-activity`, server CRDT graph diff, SVG viz |
 | **10** | ✅ | Graph HTTP POST/GET, SDK HTTP helpers |
-| **11** | ✅ | `npm test` (24 cases) |
+| **11** | ✅ | `npm test` (64 cases) |
 | **P0** | ✅ | `protocolVersion` v1, Redis Socket adapter, `build:packages` |
 | **P1** | ✅ | CRDT authority, incremental agent CRDT, audit trail |
 | **P2** | ✅ | `workspace`/`session`/`memory_chunk`, Presence, CRDT outbox |
@@ -75,7 +76,7 @@ npm run dev
 NEXT_PUBLIC_SYNC_URL=http://localhost:3001 npm run dev
 ```
 
-Scoped memory Demo checklist: [docs/en/demo-scoped-memory.md](../docs/en/demo-scoped-memory.md).
+Demo checklists: [demo-scoped-memory](../docs/en/demo-scoped-memory.md) (memory chunks) · [task-bus](../docs/en/task-bus.md) (task board + `task:seed`).
 
 ---
 
@@ -128,18 +129,21 @@ npm publish -w @slisync/sync-server --access public
 
 ---
 
-## Agent push (Phase 6)
+## Agent push & task bus (Phase 6+)
 
 ```bash
 npm run agent:push
 npm run agent:push -- --action summarize --append " [from agent]"
+npm run task:seed
+npm run agent:push -- --task-title "Review export pipeline" --status in_progress
 ```
 
 ```ts
 import { pushAgentMemory } from "@slisync/sync-sdk/agent";
+import { buildDemoTaskOps, buildTaskUpsertOps } from "@slisync/sync-sdk/graph";
 ```
 
-Optional `graphOps`; server `commit-agent-write` updates CRDT and broadcasts activity events.
+Optional `graphOps`; server `commit-agent-write` updates CRDT and broadcasts activity events. Full Demo flow: [task-bus.md](../docs/en/task-bus.md).
 
 ---
 

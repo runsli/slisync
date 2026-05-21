@@ -9,6 +9,7 @@ npm 工作区 **`@slisync/*`** 实现 **Slisync**（room 实时同步 + Memory G
 | [docs/zh/VISION.md](../docs/zh/VISION.md) | 产品愿景 |
 | [docs/zh/ROADMAP.md](../docs/zh/ROADMAP.md) | 路线图 |
 | [docs/zh/demo-scoped-memory.md](../docs/zh/demo-scoped-memory.md) | Scoped Memory Demo 验收 |
+| [docs/zh/task-bus.md](../docs/zh/task-bus.md) | Room 任务看板、`task:seed`、Agent 写任务 |
 | [README.zh-CN.md](../README.zh-CN.md) | 快速开始 |
 
 ---
@@ -43,7 +44,7 @@ npm run sync:server      # :3001
 npm run dev              # :3000 集成 Demo
 ```
 
-主路径验收：[docs/zh/demo-scoped-memory.md](../docs/zh/demo-scoped-memory.md)。
+Demo 验收：[demo-scoped-memory.md](../docs/zh/demo-scoped-memory.md)（记忆）· [task-bus.md](../docs/zh/task-bus.md)（任务看板 + `task:seed`）。
 
 - `GET /health`
 - `GET /v1/sync/capabilities`
@@ -64,10 +65,12 @@ npm run dev              # :3000 集成 Demo
 
 ---
 
-## Agent 与 Graph
+## Agent、任务总线与 Graph
 
 ```bash
 npm run agent:push
+npm run agent:push -- --task-title "审查导出流水线" --status in_progress
+npm run task:seed
 npm run graph:seed
 npm run graph:push:http
 npm run graph:traverse:http -- --start <nodeId>
@@ -75,7 +78,9 @@ npm run graph:traverse:http -- --start <nodeId>
 
 - `POST /v1/graphs/:roomId/ops`
 - `GET /v1/graphs/:roomId/traverse?startId=...&workspaceId=...&sessionId=...`
-- `MemoryGraph.upsertChunk()` · `buildScopedMemoryOps()`
+- `MemoryGraph.upsertChunk()` · `MemoryGraph.upsertTask()` · `buildScopedMemoryOps()` · `buildDemoTaskOps()`
+
+详见 [task-bus.md](../docs/zh/task-bus.md)。
 
 ---
 
@@ -123,7 +128,7 @@ const { patchData, outboxSize, localRestored, lastSyncedAt } = useSync({
 ## 测试
 
 ```bash
-npm test   # 46 cases（含 local-first）
+npm test   # 64 cases（含 task-bus-sync、local-first）
 ```
 
 ---

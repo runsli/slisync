@@ -4,7 +4,7 @@
 
 本指南描述 **Slisync 参考 Demo** 的主路径：`workspace → session → memory_chunk` 在同一 room 内实时共编，并配合 Presence、Agent 与 Local-first。旧版 `message` / `counter` 字段已折叠为对比实验。
 
-相关文档：[local-first.md](./local-first.md) · [export.md](./export.md) · [ROADMAP.md](./ROADMAP.md)
+相关文档：[local-first.md](./local-first.md) · [export.md](./export.md) · [task-bus.md](./task-bus.md)（协作任务）· [ROADMAP.md](./ROADMAP.md)
 
 ---
 
@@ -104,6 +104,15 @@ npm run export:chunks
 
 ---
 
+## 协作任务（任务看板）
+
+同一 Demo 的 **任务看板** Tab 与本文共享 room（默认 `example-room`）与 scope（`ws-demo` / `sess-demo`），任务为 Graph 上的 `kind: "task"` 节点，与 memory_chunk 并列而非替代。
+
+- 5 分钟验收、`npm run task:seed`、`agent:push --task-title`：见 [task-bus.md](./task-bus.md)
+- 记忆 Tab 与任务 Tab 可同时使用；Agent 活动以顶部 toast 与任务看板内提示为主，无需依赖底部折叠区 agentLog
+
+---
+
 ## 故障排查
 
 | 现象 | 处理 |
@@ -119,5 +128,6 @@ npm run export:chunks
 
 - [local-first.md](./local-first.md) — IndexedDB 持久化与清除缓存
 - [export.md](./export.md) — memory_chunk 导出为青笺 Markdown
+- [task-bus.md](./task-bus.md) — 协作任务看板与 CLI
 - [VISION.md](./VISION.md) — 产品定位
 - [packages/README.zh-CN.md](../../packages/README.zh-CN.md) — 协议与 API

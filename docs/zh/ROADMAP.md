@@ -48,7 +48,7 @@
 
 | 愿景 | 主题 | 状态 | 本仓库实现 |
 |------|------|------|------------|
-| **10** | Multi-Agent | 🟡 | agent push、Presence、graph activity |
+| **10** | Multi-Agent | ✅ | Room 任务总线、agent push、Presence、graph activity — [task-bus.md](./task-bus.md) |
 | **11** | Workflow Engine | ⬜ | — |
 | **12** | AI Runtime / AI OS | ⬜ | 长期愿景 |
 
@@ -67,11 +67,12 @@
 ## 建议阅读顺序
 
 1. [VISION.md](./VISION.md)
-2. [demo-scoped-memory.md](./demo-scoped-memory.md) — 5 分钟 Demo 验收
-3. [export.md](./export.md) — 青笺 Memory Chunk 导出（M0–M2）
-4. [README.zh-CN.md](../../README.zh-CN.md)
-5. [packages/README.zh-CN.md](../../packages/README.zh-CN.md)
-6. [.env.example](../../.env.example)
+2. [demo-scoped-memory.md](./demo-scoped-memory.md) — 5 分钟 Scoped Memory 验收
+3. [task-bus.md](./task-bus.md) — 5 分钟任务看板 + `task:seed` / `agent:push`
+4. [export.md](./export.md) — 青笺 Memory Chunk 导出（M0–M2）
+5. [README.zh-CN.md](../../README.zh-CN.md)
+6. [packages/README.zh-CN.md](../../packages/README.zh-CN.md)
+7. [.env.example](../../.env.example)
 
 ---
 
@@ -80,7 +81,7 @@
 1. ✅ 青笺导出 M0–M2 — 见 [export.md](./export.md)  
 2. ~~IndexedDB + outbox 统一~~（已完成，见 [local-first.md](./local-first.md)）  
 3. ~~Demo 以 scoped memory 为主~~（已完成，见 [demo-scoped-memory.md](./demo-scoped-memory.md)）  
-4. Agent 任务总线  
+4. ~~Agent 任务总线~~ — 已完成，见 [task-bus.md](./task-bus.md)  
 5. 可选 PostgreSQL / HTTP export（M4）  
 
 **不做：** 语义检索、Web3、套壳聊天。

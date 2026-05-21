@@ -4,7 +4,7 @@
 
 This guide covers the **primary Slisync reference Demo path**: edit `workspace → session → memory_chunk` in one room with Presence, Agent CLI, and local-first persistence. Legacy `message` / `counter` fields are collapsed for comparison only.
 
-See also: [local-first.md](./local-first.md) · [export.md](./export.md) · [ROADMAP.md](./ROADMAP.md)
+See also: [local-first.md](./local-first.md) · [export.md](./export.md) · [task-bus.md](./task-bus.md) (collaboration tasks) · [ROADMAP.md](./ROADMAP.md)
 
 ---
 
@@ -102,6 +102,15 @@ Details: [export.md](./export.md).
 
 ---
 
+## Collaboration tasks (task board)
+
+The same Demo **Task board** tab shares room (default `example-room`) and scope (`ws-demo` / `sess-demo`) with this guide. Tasks are graph nodes with `kind: "task"` alongside `memory_chunk`, not a separate store.
+
+- 5-minute acceptance, `npm run task:seed`, `agent:push --task-title`: see [task-bus.md](./task-bus.md)
+- Memory and task tabs can be used together; agent activity uses top toasts and in-panel hints — no need to rely on the collapsed legacy agentLog footer
+
+---
+
 ## Troubleshooting
 
 | Symptom | Fix |
@@ -117,5 +126,6 @@ Details: [export.md](./export.md).
 
 - [local-first.md](./local-first.md)
 - [export.md](./export.md)
+- [task-bus.md](./task-bus.md)
 - [VISION.md](./VISION.md)
 - [packages/README.md](../../packages/README.md)

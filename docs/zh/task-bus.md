@@ -1,10 +1,10 @@
-# Room 任务总线（Phase 0）
+# Room 任务总线
 
 [English](../en/task-bus.md)（默认）
 
-本文定义 Slisync **room 级、图原生（graph-native）** 的任务模型：权威任务状态存放在共享 Memory Graph 的 `kind: "task"` 节点中，**不**使用独立的 IndexedDB 任务表，本阶段也**不**新增 socket 事件。
+Slisync **room 级、图原生（graph-native）** 任务总线：权威任务状态存放在共享 Memory Graph 的 `kind: "task"` 节点中，与 scoped memory 共用同一 `Y.Doc` / CRDT 路径。
 
-相关：[demo-scoped-memory.md](./demo-scoped-memory.md) · [local-first.md](./local-first.md) · [packages/README.zh-CN.md](../../packages/README.zh-CN.md)
+相关：[demo-scoped-memory.md](./demo-scoped-memory.md)（记忆 Tab）· [local-first.md](./local-first.md) · [ROADMAP.md](./ROADMAP.md) · [packages/README.zh-CN.md](../../packages/README.zh-CN.md)
 
 ---
 
@@ -180,9 +180,47 @@ npm run agent:push -- --action summarize --append " [from agent]"
 
 环境变量与 `graph:seed` 相同：`SYNC_URL`、`SYNC_ROOM`、`SYNC_AGENT_ID`。覆盖策略时见 `.env.example` 中 `SYNC_AGENT_GRAPH_KINDS`（须含 `task`）。
 
-### 策略拒绝（手动验收）
+---
 
-服务端限制 kinds（不含 `task`）时，`npm run task:seed` 应失败并返回可读错误，例如 `node kind not allowed: task`。
+## 5 分钟手动验收（Demo）
+
+前置：**Node ≥ 20.9**，终端 1 已 `npm run dev` 并出现 `Local: http://localhost:3000`。
+
+| 步骤 | 操作 | 期望 |
+|------|------|------|
+| 1 | 浏览器打开 Demo，策略 **CRDT** | 见「共享记忆 · Scoped Memory」；默认 **记忆** Tab |
+| 2 | 确认 ScopeBar：`ws-demo` / `sess-demo` | 与 `graph:seed` / `task:seed` 一致 |
+| 3 | 切换到 **任务看板** Tab | 空 room 时提示运行 `npm run task:seed` |
+| 4 | 终端 2：`npm run task:seed` | `[task:seed] ok room=example-room ...` |
+| 5 | 任务看板出现待办 / 进行中 / 已完成 分栏 | ≥3 条中文演示任务 |
+| 6 | 点击任务卡片，在详情区将 status 改为「进行中」 | 本页即时更新 |
+| 7 | 再开一浏览器窗口同 URL，**任务看板** Tab | 数秒内看到相同 status（CRDT） |
+| 8 | 终端 2：`npm run agent:push -- --task-title "审查导出流水线" --status in_progress` | 顶部琥珀色 **任务变更** toast；看板内活动提示（无需展开底部 agentLog） |
+| 9 | （可选）**记忆** Tab 仍可按 [demo-scoped-memory.md](./demo-scoped-memory.md) 编辑 chunk | 两 Tab 互不破坏 |
+
+---
+
+## 故障排查
+
+| 现象 | 处理 |
+|------|------|
+| `[task:seed] failed` / 连接错误 | 先 `npm run dev`；确认 `SYNC_URL` 指向 dev 端口（默认 `http://127.0.0.1:3000`） |
+| `node kind not allowed: task` | 服务端 `SYNC_AGENT_GRAPH_KINDS` 未含 `task`；对照 `.env.example` 恢复默认或显式包含 `task` |
+| 任务看板为空 | 执行 `npm run task:seed`；确认 Scope 为 `ws-demo` / `sess-demo`（非 `ws-task-test`，后者仅用于自动化测试） |
+| 第二窗口 status 不同步 | 两窗口须同一 URL、同一 room（默认 `example-room`）；等待 `connected` / `syncReady` |
+| `agent:push` 无任务反馈 | 带 `--task-title` 与 `--status`（`todo` \| `in_progress` \| `done`）；或先 `task:seed` 再普通 `agent:push` 观察 graph 活动 |
+| 误查 IndexedDB 任务表 | **无**独立任务 object store；任务仅在 Graph 节点中，IndexedDB 仅存 room 级 CRDT 快照 |
+
+---
+
+## 明确不做
+
+| 不做 | 说明 |
+|------|------|
+| Workflow 引擎 | 愿景 11；无触发器、无 DAG 编排（见 [ROADMAP.md](./ROADMAP.md)） |
+| 独立 DB 任务表 | 不用 IndexedDB / PostgreSQL 单独存任务行；权威数据为 `kind: "task"` 图节点 |
+| `sync:task-*` socket 事件 | 任务变更走既有 `sync:crdt-update` / `sync:agent-push` + `graphOps` |
+| `export:chunks` 导出任务 | 导出管线仅针对 `memory_chunk` Markdown，不读 IDB 拼任务列表 |
 
 ---
 
@@ -195,13 +233,9 @@ npm run agent:push -- --action summarize --append " [from agent]"
 | 2 | `task:seed` CLI、服务端策略默认、`agent:push --task-title` | Demo UI、`sync:task-*` 事件 |
 | 3 | Demo **任务看板** Tab、改 status、任务向 toast | 拖拽排序、`GraphActivityPayload.nodeId` |
 | 4 | 集成测试 A/B（`task-bus-sync.test.ts`） | 仅 IndexedDB 的任务表 |
-| 5+ | 活动流 `nodeId` 自动定位（follow-up） | — |
+| 5 | 本文档、ROADMAP 愿景 10 ✅、README / Demo 交叉链接 | Workflow、独立任务 DB |
 
-### Demo（Phase 3）
-
-`npm run dev` 后打开 Demo → **任务看板** Tab；执行 `npm run task:seed` 加载分栏任务。在详情区改 status，第二窗口验证同步。Agent 推送任务时顶部 toast 显示 **任务变更**（`seed_tasks`、`update_task` 或匹配图摘要）。
-
-**Follow-up：** 可选在 `GraphActivityPayload` 增加 `nodeId`，Agent 改任务时自动滚动定位（Phase 3 未做）。
+**Follow-up：** 可选 `GraphActivityPayload.nodeId` 自动定位任务卡片。
 
 ---
 

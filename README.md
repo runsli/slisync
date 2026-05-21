@@ -42,7 +42,7 @@ Details: [docs/en/VISION.md](./docs/en/VISION.md#2-why-it-matters).
 | 4–6 | Persistence / CRDT / SDK | ✅ |
 | 7–8 | Memory layer / graph | ✅ [scoped memory Demo](./docs/en/demo-scoped-memory.md); ✅ graph + HTTP |
 | 9 | Semantic search | ⛔ excluded |
-| 10–12 | Multi-agent / workflow / AI OS | 🟡 agent + presence; ⬜ workflow & OS |
+| 10–12 | Multi-agent / workflow / AI OS | ✅ [room task bus](./docs/en/task-bus.md); ⬜ workflow & OS |
 
 Engineering phases 1–11, P0–P3: [packages/README.md](./packages/README.md#engineering-phases).
 
@@ -60,7 +60,12 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-**Primary path: scoped memory** — edit `workspace → session → memory_chunk` in a two-column Demo with Presence and Agent hints. Follow [docs/en/demo-scoped-memory.md](./docs/en/demo-scoped-memory.md) for a five-minute checklist. **Local-first (CRDT):** Graph and chunks survive refresh via IndexedDB — [docs/en/local-first.md](./docs/en/local-first.md).
+**Primary path: scoped memory** — edit `workspace → session → memory_chunk` in a two-column Demo with Presence and Agent hints ([demo-scoped-memory](./docs/en/demo-scoped-memory.md)). **Task board** tab — kanban tasks in the same room via CRDT ([task-bus](./docs/en/task-bus.md)). **Local-first:** Graph and chunks survive refresh via IndexedDB — [local-first](./docs/en/local-first.md).
+
+```bash
+npm run task:seed
+npm run agent:push -- --task-title "Review export pipeline" --status in_progress
+```
 
 > Legacy `message` / `counter` and LWW comparison live under collapsed **legacy shared fields** and **Advanced: LWW** sections.
 
@@ -136,9 +141,10 @@ flowchart LR
 | `npm run sync:reset` | Clear local persistence |
 | `npm run agent:push` | Socket agent write |
 | `npm run graph:seed` | Agent seeds scoped graph (default) |
+| `npm run task:seed` | Agent seeds demo tasks into `example-room` |
 | `npm run graph:push:http` | HTTP graph ops |
 | `npm run graph:traverse:http` | HTTP graph traverse |
-| `npm test` | Integration tests (24 cases) |
+| `npm test` | Unit + integration tests (64 cases) |
 | `npm run test:cluster` | Two instances + Redis (`REDIS_URL`) |
 | `npm run build:packages` | Build `dist/` for npm publish |
 

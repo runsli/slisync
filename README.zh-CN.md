@@ -48,7 +48,12 @@ npm install
 npm run dev
 ```
 
-打开 [http://localhost:3000](http://localhost:3000)。**主路径为 Scoped Memory**（`workspace → session → memory_chunk` 双栏编辑、Presence、Agent 提示）；按 [docs/zh/demo-scoped-memory.md](./docs/zh/demo-scoped-memory.md) 约 5 分钟可完成验收。**Local-first（CRDT）**：刷新不丢 Graph 与 chunk，见 [docs/zh/local-first.md](./docs/zh/local-first.md)。
+打开 [http://localhost:3000](http://localhost:3000)。**主路径：Scoped Memory**（[demo-scoped-memory](./docs/zh/demo-scoped-memory.md)）+ **任务看板** Tab（[task-bus](./docs/zh/task-bus.md)，`npm run task:seed`）。**Local-first（CRDT）**：刷新不丢 Graph 与 chunk — [local-first](./docs/zh/local-first.md)。
+
+```bash
+npm run task:seed
+npm run agent:push -- --task-title "审查导出流水线" --status in_progress
+```
 
 > 旧版 `message` / `counter` 与 LWW 对比在 Demo 折叠区「旧版共享字段演示」「高级：LWW 对比实验」。
 
@@ -95,6 +100,7 @@ if (doc && syncReady) {
 | [packages/README.zh-CN.md](./packages/README.zh-CN.md) | 技术文档（中文） |
 | [packages/README.md](./packages/README.md) | Technical (English) |
 | [docs/zh/demo-scoped-memory.md](./docs/zh/demo-scoped-memory.md) | Demo 主路径验收 |
+| [docs/zh/task-bus.md](./docs/zh/task-bus.md) | Room 任务看板与 CLI |
 | [docs/README.md](./docs/README.md) | 文档索引 |
 
 ---
@@ -102,7 +108,7 @@ if (doc && syncReady) {
 ## 测试
 
 ```bash
-npm test   # 24 cases
+npm test   # 64 cases
 ```
 
 环境变量：[.env.example](./.env.example)
