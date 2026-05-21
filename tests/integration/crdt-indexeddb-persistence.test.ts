@@ -67,7 +67,8 @@ describe("CRDT IndexedDB persistence", () => {
     });
     seedDoc.destroy();
 
-    const store = createSyncStore(DEFAULT_STATE);
+    const hydratedState = { ...DEFAULT_STATE, message: offlineMessage };
+    const store = createSyncStore(hydratedState);
     const client = createCrdtSyncClient({
       roomId,
       defaultState: DEFAULT_STATE,
@@ -79,12 +80,12 @@ describe("CRDT IndexedDB persistence", () => {
     const reader = createCrdtRoomClient({ baseUrl, roomId });
 
     try {
+      await reader.join();
+
       client.connect();
       await waitFor(() => store.getState().syncReady);
       await waitFor(() => store.getState().outboxSize === 0);
       await waitFor(() => store.getState().data.message === offlineMessage);
-
-      await reader.join();
 
       await waitFor(
         () => readSharedMemoryState(reader.doc).message === offlineMessage,

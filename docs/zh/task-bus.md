@@ -194,13 +194,33 @@ npm run agent:push -- --action summarize --append " [from agent]"
 | 1 | `upsertTask`、`updateTaskStatus`、`filterTasksByScope`、`buildDemoTaskOps` | Demo UI、`sync:task-*` 事件 |
 | 2 | `task:seed` CLI、服务端策略默认、`agent:push --task-title` | Demo UI、`sync:task-*` 事件 |
 | 3 | Demo **任务看板** Tab、改 status、任务向 toast | 拖拽排序、`GraphActivityPayload.nodeId` |
-| 4+ | 活动流 `nodeId` 自动定位（follow-up） | 仅 IndexedDB 的任务表 |
+| 4 | 集成测试 A/B（`task-bus-sync.test.ts`） | 仅 IndexedDB 的任务表 |
+| 5+ | 活动流 `nodeId` 自动定位（follow-up） | — |
 
 ### Demo（Phase 3）
 
 `npm run dev` 后打开 Demo → **任务看板** Tab；执行 `npm run task:seed` 加载分栏任务。在详情区改 status，第二窗口验证同步。Agent 推送任务时顶部 toast 显示 **任务变更**（`seed_tasks`、`update_task` 或匹配图摘要）。
 
 **Follow-up：** 可选在 `GraphActivityPayload` 增加 `nodeId`，Agent 改任务时自动滚动定位（Phase 3 未做）。
+
+---
+
+## 测试（Phase 4）
+
+集成测试使用独立 scope `ws-task-test` / `sess-task-test`（不污染 `example-room` 演示数据）。
+
+```bash
+npm test
+# 仅任务总线同步：
+npx tsx --test tests/integration/task-bus-sync.test.ts
+```
+
+| 用例 | 验证内容 |
+|------|----------|
+| **A** | 同 room 双客户端：writer `upsertTask` + `updateTaskStatus` → reader 快照 `status` 一致 |
+| **B** | `pushAgentMemory` + `buildTaskUpsertOps` → 已连接 reader 观察到 task 节点 |
+
+上文 Demo 手动步骤（`task:seed`、任务看板 Tab）与 B（Agent 路径）、A（UI 改 status）一致。
 
 ---
 

@@ -194,13 +194,33 @@ With server env restricting kinds (no `task`), `npm run task:seed` should fail w
 | 1 | `upsertTask`, `updateTaskStatus`, `filterTasksByScope`, `buildDemoTaskOps` | Demo UI, `sync:task-*` events |
 | 2 | `task:seed` CLI, server policy defaults, `agent:push --task-title` | Demo UI, `sync:task-*` events |
 | 3 | Demo **任务看板** Tab, status edits, task-aware toasts | Drag reorder, `GraphActivityPayload.nodeId` |
-| 4+ | Activity `nodeId` auto-focus (follow-up) | IndexedDB-only task tables |
+| 4 | Integration tests A/B (`task-bus-sync.test.ts`) | IndexedDB-only task tables |
+| 5+ | Activity `nodeId` auto-focus (follow-up) | — |
 
 ### Demo (Phase 3)
 
 With `npm run dev`, open the Demo → **任务看板** tab. Run `npm run task:seed` to load demo columns (待办 / 进行中 / 已完成). Edit status in the detail panel; open a second browser window to verify CRDT sync. Top toasts highlight **任务变更** when Agent pushes tasks (`seed_tasks`, `update_task`, or matching graph summaries).
 
 **Follow-up:** optional `GraphActivityPayload.nodeId` for scroll-to-card on Agent edits (not in Phase 3).
+
+---
+
+## Tests (Phase 4)
+
+Automated integration tests use isolated scope `ws-task-test` / `sess-task-test` (not `example-room` demo data).
+
+```bash
+npm test
+# or only task bus sync:
+npx tsx --test tests/integration/task-bus-sync.test.ts
+```
+
+| Case | What it verifies |
+|------|------------------|
+| **A** | Two CRDT clients in one room: writer `upsertTask` + `updateTaskStatus` → reader snapshot shows the same `status` |
+| **B** | `pushAgentMemory` with `buildTaskUpsertOps` → connected reader observes the task node |
+
+Manual Demo steps above (`task:seed`, task board Tab) align with case B (agent path) and case A (human status edit in UI).
 
 ---
 

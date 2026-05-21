@@ -3,7 +3,6 @@ import { describe, it } from "node:test";
 import * as Y from "yjs";
 import { encodeUpdate } from "@slisync/sync-sdk/crdt";
 import {
-  encodeDocumentSnapshot,
   initSharedMemoryDoc,
   readSharedMemoryState,
   updateMessage,
@@ -21,12 +20,12 @@ describe("applyServerSnapshotToDoc", () => {
     initSharedMemoryDoc(local, DEFAULT_STATE);
 
     const remote = new Y.Doc();
-    initSharedMemoryDoc(remote, DEFAULT_STATE);
+    Y.applyUpdate(remote, Y.encodeStateAsUpdate(local));
     updateMessage(remote, DEFAULT_STATE.message, "from-server");
 
     applyServerSnapshotToDoc(
       local,
-      encodeUpdate(encodeDocumentSnapshot(remote)),
+      encodeUpdate(Y.encodeStateAsUpdate(remote, Y.encodeStateVector(local))),
     );
 
     assert.equal(readSharedMemoryState(local).message, "from-server");
