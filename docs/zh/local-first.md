@@ -103,10 +103,42 @@ Slisync 正在为 CRDT room 增加**客户端持久化**，使房间状态与待
 | **1** ✅ | `createIndexedDBRoomStore()` + `tests/unit/indexeddb-room-store.test.ts` |
 | **2** ✅ | `PersistentCrdtOutbox`、`createCrdtOutbox()`、`InMemoryCrdtOutbox` |
 | **3** ✅ | `CrdtSyncClient` hydrate + 快照持久化；`useSync({ localPersistence })` |
-| **4** | 集成测试（刷新 / 第二客户端实例） |
+| **4** ✅ | 集成测试（IndexedDB 刷新 / outbox flush） |
 | **5** | Demo UI + ROADMAP 愿景 2 标 ✅ |
 
 **后续：** 从本地存储导出 chunks；多 Tab 协调。
+
+---
+
+## 测试（Phase 4）
+
+需要 **Node ≥ 20.9**。
+
+```bash
+# 全量（含 local-first 单元与集成）
+npm test
+
+# 仅 IndexedDB 集成
+npx tsx --test tests/integration/crdt-indexeddb-persistence.test.ts
+
+# 仅 local-first 单元
+npx tsx --test tests/unit/indexeddb-room-store.test.ts \
+  tests/unit/persistent-crdt-outbox.test.ts \
+  tests/unit/merge-local-remote.test.ts
+```
+
+| 文件 | 用例 |
+|------|------|
+| `tests/unit/indexeddb-room-store.test.ts` | IDB put/get/delete、错误 schema |
+| `tests/unit/persistent-crdt-outbox.test.ts` | debounce 持久化、drain 清空 |
+| `tests/unit/merge-local-remote.test.ts` | `applyServerSnapshotToDoc` |
+| `tests/integration/crdt-local-persistence.test.ts` | noop store hydrate、断开重连 |
+| `tests/integration/crdt-indexeddb-persistence.test.ts` | **A** IDB 预置 outbox → 新实例 join flush → 读者收到；**B** flush 后 IDB `outbox` 为空 |
+
+Node 集成测试使用 devDependency `fake-indexeddb`（文件顶部 `import "fake-indexeddb/auto"`）。  
+`npm run test:cluster` 不依赖 IndexedDB。
+
+CI：`.github/workflows/ci.yml` 已执行 `npm test`。
 
 ---
 

@@ -103,10 +103,35 @@ Re-evaluate the [`idb`](https://github.com/jakearchibald/idb) wrapper only if up
 | **1** ✅ | `createIndexedDBRoomStore()`, `tests/unit/indexeddb-room-store.test.ts` |
 | **2** ✅ | `PersistentCrdtOutbox`, `createCrdtOutbox()`, `InMemoryCrdtOutbox` |
 | **3** ✅ | `CrdtSyncClient` hydrate + snapshot persist; `useSync({ localPersistence })` |
-| **4** | Integration tests (refresh / second client instance) |
+| **4** ✅ | Integration tests (IndexedDB refresh / outbox flush) |
 | **5** | Demo UI + ROADMAP ✅ for Vision 2 |
 
 **Follow-up:** export chunks from local store; multi-tab coordination.
+
+---
+
+## Tests (Phase 4)
+
+Requires **Node ≥ 20.9**.
+
+```bash
+npm test
+
+npx tsx --test tests/integration/crdt-indexeddb-persistence.test.ts
+```
+
+| File | Coverage |
+|------|----------|
+| `tests/unit/indexeddb-room-store.test.ts` | IDB CRUD, invalid schema |
+| `tests/unit/persistent-crdt-outbox.test.ts` | debounced outbox persist, drain |
+| `tests/unit/merge-local-remote.test.ts` | `applyServerSnapshotToDoc` |
+| `tests/integration/crdt-local-persistence.test.ts` | noop store hydrate, reopen |
+| `tests/integration/crdt-indexeddb-persistence.test.ts` | **A** IDB-seeded outbox → new instance flush → reader; **B** empty IDB outbox after flush |
+
+Integration tests use devDependency `fake-indexeddb` (`import "fake-indexeddb/auto"`).  
+`npm run test:cluster` does not require IndexedDB.
+
+CI runs `npm test` in `.github/workflows/ci.yml`.
 
 ---
 

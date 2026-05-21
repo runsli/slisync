@@ -101,8 +101,11 @@ describe("CRDT local persistence", () => {
     try {
       client.connect();
       await waitFor(() => store.getState().data.message === offlineMessage);
+      assert.equal(
+        readSharedMemoryState(client.getDocument()!).message,
+        offlineMessage,
+      );
       await waitFor(() => store.getState().syncReady);
-      assert.equal(readSharedMemoryState(client.getDocument()!).message, offlineMessage);
     } finally {
       client.disconnect();
     }
