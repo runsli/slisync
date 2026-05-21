@@ -148,37 +148,15 @@ export function SyncDemo() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-8">
-      <header className="space-y-3">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-8">
+      <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">
-          Slisync · 实时同步 Demo
+          Slisync · 共享记忆 Demo
         </h1>
-        <p className="text-sm text-zinc-500">{activeHint}</p>
-
-        <div
-          className="inline-flex rounded-lg border border-zinc-200 p-0.5 dark:border-zinc-700"
-          role="group"
-          aria-label="同步策略"
-        >
-          {STRATEGIES.map((item) => {
-            const active = strategy === item.id;
-            return (
-              <button
-                key={item.id}
-                type="button"
-                aria-pressed={active}
-                onClick={() => setStrategy(item.id)}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                  active
-                    ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
-                    : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-900"
-                }`}
-              >
-                {item.label}
-              </button>
-            );
-          })}
-        </div>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+          workspace → session → memory_chunk · 多窗口与 Agent 在同一 room
+          内实时共编结构化记忆
+        </p>
       </header>
 
       {mounted && connectionError ? (
@@ -246,14 +224,45 @@ export function SyncDemo() {
         ) : null}
       </div>
 
+      {strategy === "crdt" && mounted && presenceMembers.length > 0 ? (
+        <section className="flex flex-wrap gap-2 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
+          <p className="w-full text-xs font-medium uppercase tracking-wide text-zinc-500">
+            在线成员
+          </p>
+          {presenceMembers.map((m) => (
+            <span
+              key={m.clientId}
+              className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 px-2.5 py-1 text-xs dark:border-zinc-700"
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${
+                  m.status === "online" ? "bg-emerald-500" : "bg-zinc-400"
+                }`}
+              />
+              {m.actorId.slice(0, 8)}
+            </span>
+          ))}
+        </section>
+      ) : null}
+
+      {strategy === "crdt" && mounted ? (
+        <MemoryGraphPanel
+          graphId={ROOM_ID}
+          actorId={clientId || "anonymous"}
+          syncReady={syncReady}
+          getCrdtDocument={getCrdtDocument}
+          notifyGraphActivity={notifyGraphActivity}
+        />
+      ) : null}
+
       {strategy === "crdt" && mounted ? (
         <section className="space-y-3 rounded-xl border border-teal-200 bg-teal-50/50 p-4 dark:border-teal-900/50 dark:bg-teal-950/30">
           <p className="text-xs font-medium uppercase tracking-wide text-teal-800 dark:text-teal-200">
             Local-first（CRDT）
           </p>
           <p className="text-sm text-teal-900 dark:text-teal-100">
-            刷新页面后，本 room 的 message / counter / Memory Graph 编辑会先从 IndexedDB
-            恢复，再与服务端合并同步。
+            刷新页面后，本 room 的 Memory Graph（workspace / session /
+            memory_chunk）会先从 IndexedDB 恢复，再与服务端 CRDT 合并同步。
           </p>
           <dl className="grid gap-1 text-xs text-teal-900/90 dark:text-teal-100/90 sm:grid-cols-2">
             <div>
@@ -284,102 +293,92 @@ export function SyncDemo() {
         </section>
       ) : null}
 
-      {strategy === "crdt" && mounted && presenceMembers.length > 0 ? (
-        <section className="flex flex-wrap gap-2 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
-          <p className="w-full text-xs font-medium uppercase tracking-wide text-zinc-500">
-            在线成员
-          </p>
-          {presenceMembers.map((m) => (
-            <span
-              key={m.clientId}
-              className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 px-2.5 py-1 text-xs dark:border-zinc-700"
-            >
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  m.status === "online" ? "bg-emerald-500" : "bg-zinc-400"
-                }`}
-              />
-              {m.actorId.slice(0, 8)}
-            </span>
-          ))}
-        </section>
-      ) : null}
+      <details className="rounded-xl border border-zinc-200 dark:border-zinc-800">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          旧版共享字段演示（message / counter）
+        </summary>
+        <div className="flex flex-col gap-4 border-t border-zinc-200 p-4 dark:border-zinc-800">
+          <section className="space-y-2">
+            <label className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+              Message
+            </label>
+            <input
+              suppressHydrationWarning
+              name="shared-memory-message"
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              className="w-full rounded-lg border border-zinc-200 bg-transparent px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:border-zinc-700"
+              value={displayMessage}
+              readOnly={!mounted}
+              onChange={(e) =>
+                patchData({ message: e.target.value }, { debounceMs: 300 })
+              }
+              placeholder="Type to sync across windows..."
+            />
+          </section>
 
-      <section className="space-y-2 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
-        <label className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-          Message
-        </label>
-        <input
-          suppressHydrationWarning
-          name="shared-memory-message"
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          className="w-full rounded-lg border border-zinc-200 bg-transparent px-3 py-2 text-sm outline-none focus:border-zinc-400 dark:border-zinc-700"
-          value={displayMessage}
-          readOnly={!mounted}
-          onChange={(e) =>
-            patchData({ message: e.target.value }, { debounceMs: 300 })
-          }
-          placeholder="Type to sync across windows..."
-        />
-      </section>
+          <section className="flex items-center justify-between">
+            <div>
+              <p className="text-xs text-zinc-500">Counter</p>
+              <p className="text-3xl font-semibold tabular-nums">
+                {mounted ? data.counter : initialState.counter}
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={!canEditCounter}
+                className="rounded-lg border border-zinc-200 px-4 py-2 text-sm hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:hover:bg-zinc-900"
+                onClick={() => patchData({ counter: data.counter - 1 })}
+              >
+                −
+              </button>
+              <button
+                type="button"
+                disabled={!canEditCounter}
+                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
+                onClick={() => patchData({ counter: data.counter + 1 })}
+              >
+                +
+              </button>
+            </div>
+          </section>
 
-      <section className="flex items-center justify-between rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
-        <div>
-          <p className="text-xs text-zinc-500">Counter</p>
-          <p className="text-3xl font-semibold tabular-nums">
-            {mounted ? data.counter : initialState.counter}
-          </p>
+          <section className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
+                Agent 活动日志
+              </p>
+              <code className="text-[10px] text-zinc-400">npm run agent:push</code>
+            </div>
+            {mounted && (data.agentLog?.length ?? 0) > 0 ? (
+              <ul className="max-h-40 space-y-2 overflow-y-auto text-xs text-zinc-600 dark:text-zinc-400">
+                {[...(data.agentLog ?? [])].reverse().map((entry) => (
+                  <li
+                    key={entry.at}
+                    className="rounded-md bg-zinc-50 px-2 py-1.5 dark:bg-zinc-900/60"
+                  >
+                    <span className="font-medium text-violet-700 dark:text-violet-300">
+                      {entry.agentId}
+                    </span>{" "}
+                    · {entry.action} — {entry.summary}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-zinc-500">
+                另开终端运行{" "}
+                <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">
+                  npm run agent:push -- --action summarize --append &quot;
+                  [from agent]&quot;
+                </code>
+                ，本页会收到 agent 写入并显示活动条。
+              </p>
+            )}
+          </section>
         </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            disabled={!canEditCounter}
-            className="rounded-lg border border-zinc-200 px-4 py-2 text-sm hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:hover:bg-zinc-900"
-            onClick={() => patchData({ counter: data.counter - 1 })}
-          >
-            −
-          </button>
-          <button
-            type="button"
-            disabled={!canEditCounter}
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-zinc-100 dark:text-zinc-900"
-            onClick={() => patchData({ counter: data.counter + 1 })}
-          >
-            +
-          </button>
-        </div>
-      </section>
-
-      <section className="space-y-2 rounded-xl border border-zinc-200 p-4 dark:border-zinc-800">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-            Agent 活动日志
-          </p>
-          <code className="text-[10px] text-zinc-400">npm run agent:push</code>
-        </div>
-        {mounted && (data.agentLog?.length ?? 0) > 0 ? (
-          <ul className="max-h-40 space-y-2 overflow-y-auto text-xs text-zinc-600 dark:text-zinc-400">
-            {[...(data.agentLog ?? [])].reverse().map((entry) => (
-              <li key={entry.at} className="rounded-md bg-zinc-50 px-2 py-1.5 dark:bg-zinc-900/60">
-                <span className="font-medium text-violet-700 dark:text-violet-300">
-                  {entry.agentId}
-                </span>{" "}
-                · {entry.action} — {entry.summary}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-xs text-zinc-500">
-            另开终端运行{" "}
-            <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">
-              npm run agent:push -- --action summarize --append &quot; [from agent]&quot;
-            </code>
-            ，本页会收到 agent 写入并显示活动条。
-          </p>
-        )}
-      </section>
+      </details>
 
       {mounted ? (
         <SyncStrategyPanel
@@ -392,22 +391,50 @@ export function SyncDemo() {
         />
       ) : null}
 
-      {strategy === "crdt" && mounted ? (
-        <MemoryGraphPanel
-          graphId={ROOM_ID}
-          actorId={clientId || "anonymous"}
-          syncReady={syncReady}
-          getCrdtDocument={getCrdtDocument}
-          notifyGraphActivity={notifyGraphActivity}
-        />
-      ) : null}
-
-      {strategy === "lww" ? (
-        <p className="text-xs text-zinc-500">
-          试 LWW：A 窗口离线改文案 → B 窗口修改并同步 → A
-          恢复网络再编辑，应出现黄色冲突条且内容回退为 B 的版本。
-        </p>
-      ) : null}
+      <details className="rounded-xl border border-zinc-200 dark:border-zinc-800">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-zinc-600 dark:text-zinc-400">
+          高级：LWW 对比实验
+        </summary>
+        <div className="space-y-4 border-t border-zinc-200 p-4 dark:border-zinc-800">
+          <p className="text-sm text-zinc-500">{activeHint}</p>
+          <div
+            className="inline-flex rounded-lg border border-zinc-200 p-0.5 dark:border-zinc-700"
+            role="group"
+            aria-label="同步策略"
+          >
+            {STRATEGIES.map((item) => {
+              const active = strategy === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setStrategy(item.id)}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    active
+                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                      : "text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-900"
+                  }`}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
+          {strategy === "lww" ? (
+            <p className="text-xs text-zinc-500">
+              试 LWW：A 窗口离线改文案 → B 窗口修改并同步 → A
+              恢复网络再编辑，应出现黄色冲突条且内容回退为 B 的版本。展开上方「旧版共享字段演示」编辑
+              Message。
+            </p>
+          ) : (
+            <p className="text-xs text-zinc-500">
+              主路径使用 CRDT + Memory Graph。切换至 LWW 后 Graph 面板会隐藏，仅保留
+              message/counter 补丁同步实验。
+            </p>
+          )}
+        </div>
+      </details>
 
       {mounted && clientId ? (
         <footer className="space-y-1 break-all text-xs text-zinc-400">
