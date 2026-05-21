@@ -17,7 +17,9 @@ export {
 } from "./scoped-memory";
 export {
   buildDemoTaskOps,
+  buildTaskUpsertOps,
   filterTasksByScope,
+  stableTaskNodeId,
   type UpsertTaskInput,
   type UpdateTaskPatch,
 } from "./task-bus";

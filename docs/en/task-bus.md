@@ -144,16 +144,45 @@ npm run graph:policy
 
 ---
 
-## CLI (unchanged protocol)
+## CLI (Phase 2)
 
-With `npm run dev` running:
+Terminal 1:
+
+```bash
+npm run dev
+```
+
+Terminal 2 — seed scoped memory (optional, for workspace/session nodes):
 
 ```bash
 npm run graph:seed
+```
+
+Seed demo tasks into `example-room` (`ws-demo` / `sess-demo`):
+
+```bash
+npm run task:seed
+```
+
+Expected: `[task:seed] ok room=example-room ...`
+
+Upsert one task by title (stable node id, same path as agent push):
+
+```bash
+npm run agent:push -- --task-title "Review export pipeline" --status in_progress
+```
+
+Legacy message patch (unchanged):
+
+```bash
 npm run agent:push -- --action summarize --append " [from agent]"
 ```
 
-Scoped memory seeding is documented in [demo-scoped-memory.md](./demo-scoped-memory.md). Task demo ops: `buildDemoTaskOps` (apply via `applyGraphOps` or `agent:push` graphOps).
+Environment (same as `graph:seed`): `SYNC_URL`, `SYNC_ROOM`, `SYNC_AGENT_ID`. See `.env.example` for `SYNC_AGENT_GRAPH_KINDS` (must include `task` when overriding).
+
+### Policy rejection (manual check)
+
+With server env restricting kinds (no `task`), `npm run task:seed` should fail with a readable error, e.g. `node kind not allowed: task`.
 
 ---
 
@@ -163,7 +192,8 @@ Scoped memory seeding is documented in [demo-scoped-memory.md](./demo-scoped-mem
 |-------|----------|--------------|
 | 0 | `TaskData`, `parseTaskData`, policy defaults, design docs | SDK helpers, Demo UI |
 | 1 | `upsertTask`, `updateTaskStatus`, `filterTasksByScope`, `buildDemoTaskOps` | Demo UI, `sync:task-*` events |
-| 2+ | Demo / activity integration (planned) | IndexedDB-only task tables |
+| 2 | `task:seed` CLI, server policy defaults, `agent:push --task-title` | Demo UI, `sync:task-*` events |
+| 3+ | Demo / activity integration (planned) | IndexedDB-only task tables |
 
 ---
 

@@ -207,6 +207,38 @@ export function buildDemoTaskOps(
   ];
 }
 
+/**
+ * Stable task node id from title so repeated agent pushes upsert the same node.
+ */
+export function stableTaskNodeId(title: string): string {
+  const slug = title
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fff]+/gi, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48);
+  return slug.length > 0 ? `task-${slug}` : `task-${newEntityId("node").slice(-12)}`;
+}
+
+/** Build a single upsertNode op for one scoped task (idempotent by title). */
+export function buildTaskUpsertOps(
+  actorId: string,
+  input: UpsertTaskInput,
+): GraphOp[] {
+  const id = input.id ?? stableTaskNodeId(input.title);
+  const node = buildTaskNode(actorId, id, {
+    workspaceId: input.workspaceId,
+    sessionId: input.sessionId,
+    title: input.title,
+    status: input.status,
+    assigneeId: input.assigneeId,
+    priority: input.priority,
+    dueAt: input.dueAt,
+    source: input.source,
+  });
+  return [{ op: "upsertNode", node }];
+}
+
 function buildTaskNode(
   actorId: string,
   id: string,
