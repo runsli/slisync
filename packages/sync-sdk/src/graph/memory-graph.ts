@@ -2,6 +2,7 @@ import * as Y from "yjs";
 import {
   edgeIdFor,
   parseMemoryChunkData,
+  parseTaskData,
   type EdgeRelation,
   type LinkOptions,
   type MemoryChunkData,
@@ -9,11 +10,14 @@ import {
   type MemoryNode,
   type MemoryGraphSnapshot,
   type MemoryScope,
+  type TaskData,
+  type TaskStatus,
   type TraverseQuery,
   type TraverseResult,
   type UpsertNodeInput,
 } from "@slisync/sync-schema";
 import type { UpsertChunkInput } from "./scoped-memory";
+import type { UpdateTaskPatch, UpsertTaskInput } from "./task-bus";
 import {
   applyLinkEdgeToDoc,
   applyUpsertNodeToDoc,
@@ -95,6 +99,60 @@ export class MemoryGraph {
       data: data as unknown as Record<string, unknown>,
       tags: input.tags ?? ["scope:chunk"],
       createdBy: input.createdBy,
+    });
+  }
+
+  /** Upsert a scoped task node (`kind: "task"`). */
+  upsertTask(input: UpsertTaskInput): MemoryNode {
+    const scope: MemoryScope = {
+      workspaceId: input.workspaceId,
+      sessionId: input.sessionId,
+    };
+    const data: TaskData = {
+      scope,
+      status: input.status,
+      ...(input.assigneeId !== undefined
+        ? { assigneeId: input.assigneeId }
+        : {}),
+      ...(input.priority !== undefined ? { priority: input.priority } : {}),
+      ...(input.dueAt !== undefined ? { dueAt: input.dueAt } : {}),
+      ...(input.source !== undefined ? { source: input.source } : {}),
+    };
+    return this.upsertNode({
+      id: input.id,
+      kind: "task",
+      title: input.title,
+      data: data as unknown as Record<string, unknown>,
+      tags: input.tags ?? ["scope:task"],
+      createdBy: input.createdBy,
+    });
+  }
+
+  /** Update lifecycle status and optional task fields on an existing task node. */
+  updateTaskStatus(
+    nodeId: string,
+    status: TaskStatus,
+    patch: UpdateTaskPatch = {},
+  ): MemoryNode {
+    const existing = this.getNode(nodeId);
+    if (!existing || existing.kind !== "task") {
+      throw new Error(`updateTaskStatus: not a task (${nodeId})`);
+    }
+    const task = parseTaskData(existing);
+    if (!task) {
+      throw new Error(`updateTaskStatus: invalid task data (${nodeId})`);
+    }
+    return this.upsertTask({
+      id: nodeId,
+      workspaceId: task.scope.workspaceId,
+      sessionId: task.scope.sessionId,
+      title: patch.title ?? existing.title,
+      status,
+      assigneeId: patch.assigneeId ?? task.assigneeId,
+      priority: patch.priority ?? task.priority,
+      dueAt: patch.dueAt ?? task.dueAt,
+      source: patch.source ?? task.source,
+      tags: patch.tags ?? existing.tags,
     });
   }
 

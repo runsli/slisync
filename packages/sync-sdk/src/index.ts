@@ -53,12 +53,15 @@ export {
   traverseGraph,
   initMemoryGraphDoc,
   buildScopedMemoryOps,
+  buildDemoTaskOps,
   filterNodesByScope,
+  filterTasksByScope,
   exportMemoryChunksFromSnapshot,
   exportMemoryChunksFromCrdtUpdate,
   exportMemoryChunksFromCrdtFile,
   slugifyChunkFilename,
 } from "./graph";
+export type { UpsertTaskInput, UpdateTaskPatch } from "./graph";
 export type { ExportChunksOptions, ExportedChunkFile } from "./graph";
 export type {
   GraphMeta,

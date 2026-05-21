@@ -48,7 +48,7 @@ Tasks are **nodes** in the same CRDT-backed graph as scoped memory. Clients and 
 | Typical edges | `contains` from session | `depends_on`, `assigned_to`, optional `related_to` → chunk |
 | Parser | `parseMemoryChunkData` | `parseTaskData` |
 
-A task may link to a memory chunk with **`related_to`** when context should stay in the chunk body but the task tracks execution (Phase 0 documents the pattern; `MemoryGraph.upsertTask` arrives in Phase 1).
+A task may link to a memory chunk with **`related_to`** when context should stay in the chunk body but the task tracks execution.
 
 ---
 
@@ -82,6 +82,52 @@ Example node payload:
 
 ---
 
+## SDK (Phase 1)
+
+Exports from `@slisync/sync-sdk` / `@slisync/sync-sdk/graph`:
+
+| API | Role |
+|-----|------|
+| `MemoryGraph.upsertTask` | Create or update a `kind: "task"` node on the room `Y.Doc` |
+| `MemoryGraph.updateTaskStatus` | Change `status` and optional fields on an existing task |
+| `filterTasksByScope` | Filter snapshot nodes to tasks matching `workspaceId` / `sessionId` |
+| `buildDemoTaskOps` | Seed ops: workspace/session + 3 Chinese demo tasks + `contains` / `depends_on` / `assigned_to` |
+
+```ts
+import * as Y from "yjs";
+import {
+  applyGraphOps,
+  buildDemoTaskOps,
+  filterTasksByScope,
+  MemoryGraph,
+  readMemoryGraphSnapshot,
+} from "@slisync/sync-sdk/graph";
+
+const doc = new Y.Doc();
+const graph = MemoryGraph.on(doc, "agent-1").init("room-graph");
+
+const task = graph.upsertTask({
+  workspaceId: "ws-demo",
+  sessionId: "sess-demo",
+  title: "Review export pipeline",
+  status: "todo",
+  priority: 1,
+});
+
+graph.updateTaskStatus(task.id, "in_progress", { assigneeId: "user-42" });
+
+applyGraphOps(doc, buildDemoTaskOps("agent-1", "ws-demo", "sess-demo"), "agent-1");
+const snap = readMemoryGraphSnapshot(doc);
+const tasks = filterTasksByScope(snap?.nodes ?? [], {
+  workspaceId: "ws-demo",
+  sessionId: "sess-demo",
+});
+```
+
+Types: `UpsertTaskInput`, `UpdateTaskPatch` from the same module. Parsing: `parseTaskData` from `@slisync/sync-schema`.
+
+---
+
 ## Agent graph policy (default)
 
 `DEFAULT_AGENT_GRAPH_POLICY` allows:
@@ -107,18 +153,17 @@ npm run graph:seed
 npm run agent:push -- --action summarize --append " [from agent]"
 ```
 
-Scoped memory seeding is documented in [demo-scoped-memory.md](./demo-scoped-memory.md). Task nodes will be seeded/updated through the same graph op path in later phases; Phase 0 only ships types, parsers, and policy defaults.
+Scoped memory seeding is documented in [demo-scoped-memory.md](./demo-scoped-memory.md). Task demo ops: `buildDemoTaskOps` (apply via `applyGraphOps` or `agent:push` graphOps).
 
 ---
 
-## Phase 0 scope
+## Delivery phases
 
-| In scope | Out of scope |
-|----------|--------------|
-| `TaskStatus`, `TaskData`, `parseTaskData` | `MemoryGraph.upsertTask` helper |
-| Design docs (this file) | Demo UI for tasks |
-| Default agent policy for `task` / `depends_on` / `assigned_to` | `sync:task-*` socket events |
-| Unit tests for parsing | IndexedDB-only task tables |
+| Phase | In scope | Out of scope |
+|-------|----------|--------------|
+| 0 | `TaskData`, `parseTaskData`, policy defaults, design docs | SDK helpers, Demo UI |
+| 1 | `upsertTask`, `updateTaskStatus`, `filterTasksByScope`, `buildDemoTaskOps` | Demo UI, `sync:task-*` events |
+| 2+ | Demo / activity integration (planned) | IndexedDB-only task tables |
 
 ---
 

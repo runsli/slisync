@@ -48,7 +48,7 @@ flowchart TB
 | 典型边 | 自 session `contains` | `depends_on`、`assigned_to`，可选 `related_to` → chunk |
 | 解析 | `parseMemoryChunkData` | `parseTaskData` |
 
-任务可通过 **`related_to`** 关联到 memory chunk：正文留在 chunk，任务跟踪执行状态（Phase 0 仅文档化；`MemoryGraph.upsertTask` 在 Phase 1 提供）。
+任务可通过 **`related_to`** 关联到 memory chunk：正文留在 chunk，任务跟踪执行状态。
 
 ---
 
@@ -82,6 +82,52 @@ flowchart TB
 
 ---
 
+## SDK（Phase 1）
+
+从 `@slisync/sync-sdk` / `@slisync/sync-sdk/graph` 导出：
+
+| API | 作用 |
+|-----|------|
+| `MemoryGraph.upsertTask` | 在 room 的 `Y.Doc` 上创建/更新 `kind: "task"` 节点 |
+| `MemoryGraph.updateTaskStatus` | 修改已有任务的 `status` 及可选字段 |
+| `filterTasksByScope` | 按 `workspaceId` / `sessionId` 筛出任务节点 |
+| `buildDemoTaskOps` | 种子 GraphOp：workspace/session + 3 条中文演示任务 + `contains` / `depends_on` / `assigned_to` |
+
+```ts
+import * as Y from "yjs";
+import {
+  applyGraphOps,
+  buildDemoTaskOps,
+  filterTasksByScope,
+  MemoryGraph,
+  readMemoryGraphSnapshot,
+} from "@slisync/sync-sdk/graph";
+
+const doc = new Y.Doc();
+const graph = MemoryGraph.on(doc, "agent-1").init("room-graph");
+
+const task = graph.upsertTask({
+  workspaceId: "ws-demo",
+  sessionId: "sess-demo",
+  title: "审查导出流水线",
+  status: "todo",
+  priority: 1,
+});
+
+graph.updateTaskStatus(task.id, "in_progress", { assigneeId: "user-42" });
+
+applyGraphOps(doc, buildDemoTaskOps("agent-1", "ws-demo", "sess-demo"), "agent-1");
+const snap = readMemoryGraphSnapshot(doc);
+const tasks = filterTasksByScope(snap?.nodes ?? [], {
+  workspaceId: "ws-demo",
+  sessionId: "sess-demo",
+});
+```
+
+类型：`UpsertTaskInput`、`UpdateTaskPatch`；解析：`parseTaskData`（`@slisync/sync-schema`）。
+
+---
+
 ## Agent 图策略（默认）
 
 `DEFAULT_AGENT_GRAPH_POLICY` 默认允许：
@@ -107,18 +153,17 @@ npm run graph:seed
 npm run agent:push -- --action summarize --append " [from agent]"
 ```
 
-Scoped memory 种子流程见 [demo-scoped-memory.md](./demo-scoped-memory.md)。后续阶段将通过同一条 graph op 路径写入任务节点；Phase 0 仅交付类型、解析器与策略默认值。
+Scoped memory 种子流程见 [demo-scoped-memory.md](./demo-scoped-memory.md)。任务演示：`buildDemoTaskOps`（经 `applyGraphOps` 或 `agent:push` 的 graphOps 应用）。
 
 ---
 
-## Phase 0 范围
+## 交付阶段
 
-| 包含 | 不包含 |
-|------|--------|
-| `TaskStatus`、`TaskData`、`parseTaskData` | `MemoryGraph.upsertTask` 辅助方法 |
-| 中英文设计文档（本文） | Demo 任务 UI |
-| Agent 默认策略（`task` / `depends_on` / `assigned_to`） | `sync:task-*` socket 事件 |
-| 解析单元测试 | 仅 IndexedDB 的任务表 |
+| 阶段 | 包含 | 不包含 |
+|------|------|--------|
+| 0 | `TaskData`、`parseTaskData`、策略默认、设计文档 | SDK 辅助方法、Demo UI |
+| 1 | `upsertTask`、`updateTaskStatus`、`filterTasksByScope`、`buildDemoTaskOps` | Demo UI、`sync:task-*` 事件 |
+| 2+ | Demo / 活动流集成（规划） | 仅 IndexedDB 的任务表 |
 
 ---
 

@@ -15,6 +15,12 @@ export {
   filterNodesByScope,
   type UpsertChunkInput,
 } from "./scoped-memory";
+export {
+  buildDemoTaskOps,
+  filterTasksByScope,
+  type UpsertTaskInput,
+  type UpdateTaskPatch,
+} from "./task-bus";
 export { pushGraphOpsHttp, type PushGraphOpsHttpOptions } from "./push-graph-ops-http";
 export {
   fetchGraphTraverseHttp,
