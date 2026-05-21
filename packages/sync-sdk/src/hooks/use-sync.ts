@@ -7,6 +7,7 @@ import { createCrdtSyncClient } from "../client/create-crdt-sync-client";
 import { createSyncClient, type SyncClientOptions } from "../client/create-sync-client";
 import type { SharedMemoryState } from "../crdt/shared-memory-doc";
 import type { PatchOptions, SyncStrategy } from "../protocol";
+import type { LocalRoomStore } from "../offline/local-room-store";
 import { bindCrdtActions } from "../store/create-crdt-actions";
 import { createSyncStore, type SyncStoreHook } from "../store/create-sync-store";
 
@@ -18,6 +19,8 @@ export type UseSyncOptions<T extends Record<string, unknown>> = Omit<
   store?: SyncStoreHook<T>;
   /** `crdt` uses Yjs merge; `lww` uses versioned JSON Patch with baseVersion. */
   strategy?: SyncStrategy;
+  /** CRDT local-first persistence (default: browser with IndexedDB when available). */
+  localPersistence?: boolean | LocalRoomStore;
 };
 
 export function useSync<T extends SharedMemoryState>(
@@ -59,7 +62,7 @@ export function useSync<T extends SharedMemoryState>(
     const client = createSyncClient({ ...options, store });
     client.connect();
     return () => client.disconnect();
-  }, [mounted, strategy, options.roomId, options.url, store]);
+  }, [mounted, strategy, options.roomId, options.url, options.localPersistence, store]);
 
   const data = useStore(store, (s) => s.data);
   const version = useStore(store, (s) => s.version);

@@ -4,7 +4,8 @@ import * as Y from "yjs";
 import { io, type Socket } from "socket.io-client";
 import { decodeUpdate, encodeUpdate } from "../crdt/codec";
 import {
-  applyRemoteUpdate,
+  encodeDocumentSnapshot,
+  initSharedMemoryDoc,
   observeSharedMemory,
   onDocumentUpdate,
   readSharedMemoryState,
@@ -13,7 +14,12 @@ import {
 } from "../crdt/shared-memory-doc";
 import { ensureMemoryGraphDoc } from "../graph/ensure-graph";
 import { getRoomSyncToken } from "../get-sync-auth";
-import { CrdtUpdateOutbox } from "../offline/crdt-outbox";
+import { createCrdtOutbox } from "../offline/create-crdt-outbox";
+import type { CrdtOutbox } from "../offline/crdt-outbox-types";
+import type { LocalRoomStore } from "../offline/local-room-store";
+import { applyServerSnapshotToDoc } from "../offline/merge-local-remote";
+import { createEmptyRoomLocalRecord } from "../offline/room-record";
+import { resolveLocalRoomStore } from "../offline/resolve-local-room-store";
 import { defaultProtocolVersion } from "../sync-protocol-client";
 import { getSyncEndpoint } from "../get-sync-endpoint";
 import {
@@ -30,6 +36,11 @@ export interface CrdtSyncClientOptions<T extends SharedMemoryState> {
   roomId: string;
   defaultState: T;
   store: SyncStoreHook<T>;
+  /**
+   * Persist doc snapshot and outbox locally.
+   * Default: `true` in the browser (IndexedDB when available, else noop Map).
+   */
+  localPersistence?: boolean | LocalRoomStore;
 }
 
 const DEFAULT_RECONNECT = {
@@ -42,6 +53,7 @@ const DEFAULT_RECONNECT = {
 
 const JOIN_ACK_TIMEOUT_MS = 8000;
 const JOIN_RETRY_MS = 2500;
+const SNAPSHOT_PERSIST_DEBOUNCE_MS = 200;
 
 export class CrdtSyncClient<T extends SharedMemoryState> {
   private socket: Socket | null = null;
@@ -49,22 +61,27 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
   private unobserve: (() => void) | null = null;
   private unlisten: (() => void) | null = null;
   private joinRetryTimer: ReturnType<typeof setInterval> | null = null;
+  private snapshotPersistTimer: ReturnType<typeof setTimeout> | null = null;
   private synced = false;
-  private readonly outbox = new CrdtUpdateOutbox();
+  private readonly localStore: LocalRoomStore | null;
+  private readonly outbox: CrdtOutbox;
   private readonly options: CrdtSyncClientOptions<T>;
 
   constructor(options: CrdtSyncClientOptions<T>) {
     this.options = options;
+    this.localStore = resolveLocalRoomStore(options.localPersistence);
+    this.outbox = createCrdtOutbox({
+      roomId: options.roomId,
+      persistence: this.localStore ?? false,
+    });
   }
 
   connect() {
     if (this.socket) this.disconnect();
 
-    const { store, roomId, defaultState, url } = this.options;
-    const endpoint = getSyncEndpoint(url);
+    const { store, defaultState } = this.options;
 
     this.synced = false;
-    this.ensureClientId();
     store.getState().setSyncReady(false);
     store.getState().setStatus("connecting");
 
@@ -77,15 +94,7 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
       });
     });
 
-    this.socket = io(endpoint, {
-      path: "/socket.io",
-      transports: ["websocket", "polling"],
-      autoConnect: false,
-      ...DEFAULT_RECONNECT,
-    });
-
-    this.attachSocketHandlers();
-    this.socket.connect();
+    void this.bootstrapThenConnect(defaultState);
   }
 
   getDocument() {
@@ -110,8 +119,13 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
 
   disconnect() {
     this.emitPresenceLeave();
-    this.outbox.clear();
-    this.options.store.getState().setOutboxSize(0);
+    this.clearSnapshotPersistTimer();
+
+    const encodedSnapshot =
+      this.localStore && this.doc
+        ? encodeUpdate(encodeDocumentSnapshot(this.doc))
+        : undefined;
+
     this.clearJoinRetry();
     this.unobserve?.();
     this.unlisten?.();
@@ -125,6 +139,66 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
     this.synced = false;
     this.options.store.getState().setSyncReady(false);
     this.options.store.getState().setStatus("disconnected");
+
+    if (encodedSnapshot) {
+      void this.persistLocalRoom({ docSnapshot: encodedSnapshot });
+    }
+  }
+
+  private async bootstrapThenConnect(defaultState: T) {
+    const { store, url } = this.options;
+
+    try {
+      await this.hydrateFromLocalStore(defaultState);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to load local room state";
+      store.getState().setConnectionError(message);
+    }
+
+    this.ensureClientId();
+
+    const endpoint = getSyncEndpoint(url);
+    this.socket = io(endpoint, {
+      path: "/socket.io",
+      transports: ["websocket", "polling"],
+      autoConnect: false,
+      ...DEFAULT_RECONNECT,
+    });
+
+    this.attachSocketHandlers();
+    this.socket.connect();
+  }
+
+  private async hydrateFromLocalStore(defaultState: T) {
+    const { store, roomId } = this.options;
+    if (!this.doc) return;
+
+    if (!this.localStore) {
+      initSharedMemoryDoc(this.doc, defaultState as SharedMemoryState);
+      return;
+    }
+
+    const record = await this.localStore.get(roomId);
+    if (record?.docSnapshot) {
+      try {
+        applyServerSnapshotToDoc(this.doc, record.docSnapshot);
+      } catch (err) {
+        console.error("[crdt] local snapshot apply failed:", err);
+        initSharedMemoryDoc(this.doc, defaultState as SharedMemoryState);
+      }
+    } else {
+      initSharedMemoryDoc(this.doc, defaultState as SharedMemoryState);
+    }
+
+    if (record?.clientId) {
+      store.setState({ clientId: record.clientId });
+    }
+
+    if (record?.outbox?.length && this.outbox.hydrate) {
+      await this.outbox.hydrate(record.outbox);
+      store.getState().setOutboxSize(this.outbox.size);
+    }
   }
 
   private attachSocketHandlers() {
@@ -136,10 +210,11 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
       const encoded = encodeUpdate(update);
       if (this.canEmitCrdt()) {
         socket.emit(SYNC_EVENTS.CRDT_UPDATE, { roomId, update: encoded });
-        return;
+      } else {
+        this.outbox.enqueue(encoded);
+        store.getState().setOutboxSize(this.outbox.size);
       }
-      this.outbox.enqueue(encoded);
-      this.options.store.getState().setOutboxSize(this.outbox.size);
+      this.scheduleSnapshotPersist();
     });
 
     const onSocketConnect = () => {
@@ -191,7 +266,7 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
     socket.on(SYNC_EVENTS.CRDT_UPDATE, (payload: { update?: string }) => {
       if (!this.doc || payload?.update == null) return;
       try {
-        applyRemoteUpdate(this.doc, decodeUpdate(payload.update));
+        applyServerSnapshotToDoc(this.doc, payload.update);
         this.markSynced();
         store.setState({ version: store.getState().version + 1 });
       } catch (err) {
@@ -246,7 +321,11 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
           store.getState().setConnectionError(res.error);
           return;
         }
-        if (res?.update != null) this.applySnapshot(res.update);
+        if (res?.update != null) {
+          this.applySnapshot(res.update);
+        } else if (!this.synced) {
+          this.markSynced();
+        }
       },
     );
   }
@@ -274,7 +353,7 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
 
     const { store } = this.options;
     try {
-      applyRemoteUpdate(this.doc, decodeUpdate(encoded));
+      applyServerSnapshotToDoc(this.doc, encoded);
       this.markSynced();
       store.setState({ version: store.getState().version + 1 });
     } catch (err) {
@@ -310,6 +389,7 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
     const pending = this.outbox.drain();
     if (pending.length === 0) {
       this.options.store.getState().setOutboxSize(0);
+      void this.persistLocalRoom({ lastSyncedAt: Date.now(), clearOutbox: true });
       return;
     }
 
@@ -317,6 +397,51 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
       socket.emit(SYNC_EVENTS.CRDT_UPDATE, { roomId, update });
     }
     this.options.store.getState().setOutboxSize(0);
+    void this.persistLocalRoom({ lastSyncedAt: Date.now(), clearOutbox: true });
+  }
+
+  private scheduleSnapshotPersist() {
+    if (!this.localStore) return;
+    if (this.snapshotPersistTimer) clearTimeout(this.snapshotPersistTimer);
+    this.snapshotPersistTimer = setTimeout(() => {
+      this.snapshotPersistTimer = null;
+      void this.persistLocalRoom();
+    }, SNAPSHOT_PERSIST_DEBOUNCE_MS);
+  }
+
+  private clearSnapshotPersistTimer() {
+    if (this.snapshotPersistTimer) {
+      clearTimeout(this.snapshotPersistTimer);
+      this.snapshotPersistTimer = null;
+    }
+  }
+
+  private async persistLocalRoom(options?: {
+    docSnapshot?: string;
+    lastSyncedAt?: number | null;
+    clearOutbox?: boolean;
+  }) {
+    if (!this.localStore) return;
+
+    const docSnapshot =
+      options?.docSnapshot ??
+      (this.doc ? encodeUpdate(encodeDocumentSnapshot(this.doc)) : null);
+    if (!docSnapshot) return;
+
+    const { roomId, store } = this.options;
+    const existing = await this.localStore.get(roomId);
+    const base = existing ?? createEmptyRoomLocalRecord(roomId);
+
+    await this.localStore.put({
+      ...base,
+      docSnapshot,
+      outbox: options?.clearOutbox ? [] : [...this.outbox.peekAll()],
+      clientId: store.getState().clientId,
+      lastSyncedAt:
+        options?.lastSyncedAt !== undefined
+          ? options.lastSyncedAt
+          : base.lastSyncedAt,
+    });
   }
 
   private emitPresenceJoin() {

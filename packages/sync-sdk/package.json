@@ -37,7 +37,11 @@
       "import": "./src/graph/layout-tree.ts"
     }
   },
-  "files": ["dist", "src", "README.md"],
+  "files": [
+    "dist",
+    "src",
+    "README.md"
+  ],
   "publishConfig": {
     "access": "public",
     "exports": {
@@ -92,5 +96,8 @@
   },
   "peerDependencies": {
     "react": "^18 || ^19"
+  },
+  "devDependencies": {
+    "fake-indexeddb": "^6.2.5"
   }
 }

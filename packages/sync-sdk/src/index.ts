@@ -100,7 +100,35 @@ export {
   type AgentGraphPolicy,
 } from "@slisync/sync-schema";
 
-export { CrdtUpdateOutbox } from "./offline/crdt-outbox";
+export {
+  CrdtUpdateOutbox,
+  InMemoryCrdtOutbox,
+} from "./offline/crdt-outbox";
+export { createCrdtOutbox, type CreateCrdtOutboxOptions } from "./offline/create-crdt-outbox";
+export {
+  PersistentCrdtOutbox,
+  type PersistentCrdtOutboxOptions,
+} from "./offline/persistent-crdt-outbox";
+export {
+  ROOM_LOCAL_SCHEMA_VERSION,
+  createEmptyRoomLocalRecord,
+  isRoomLocalRecord,
+  type RoomLocalRecord,
+  type RoomLocalStrategy,
+} from "./offline/room-record";
+export {
+  createNoopLocalRoomStore,
+  isIndexedDBAvailable,
+  type LocalRoomStore,
+} from "./offline/local-room-store";
+export {
+  createIndexedDBRoomStore,
+  LocalRoomQuotaExceededError,
+} from "./offline/indexeddb-room-store";
+export type { CrdtOutbox } from "./offline/crdt-outbox-types";
+export { applyServerSnapshotToDoc } from "./offline/merge-local-remote";
+export { clearLocalRoom } from "./offline/clear-local-room";
+export { resolveLocalRoomStore } from "./offline/resolve-local-room-store";
 export { fetchSyncCapabilities, type SyncCapabilities } from "./fetch-sync-capabilities";
 export {
   SYNC_STRATEGY_DETAILS,

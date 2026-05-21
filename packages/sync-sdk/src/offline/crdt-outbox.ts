@@ -1,6 +1,8 @@
-/** Queue CRDT updates while offline or before first sync. */
+/** In-memory FIFO queue of CRDT updates (offline or before first sync). */
 
-export class CrdtUpdateOutbox {
+import type { CrdtOutbox } from "./crdt-outbox-types";
+
+export class InMemoryCrdtOutbox implements CrdtOutbox {
   private readonly queue: string[] = [];
 
   get size(): number {
@@ -26,4 +28,15 @@ export class CrdtUpdateOutbox {
   clear() {
     this.queue.length = 0;
   }
+
+  /** Replace queue contents (e.g. after loading a persisted room record). */
+  hydrate(items: readonly string[]) {
+    this.queue.length = 0;
+    for (const item of items) {
+      if (item) this.queue.push(item);
+    }
+  }
 }
+
+/** Back-compat alias for InMemoryCrdtOutbox. */
+export class CrdtUpdateOutbox extends InMemoryCrdtOutbox {}

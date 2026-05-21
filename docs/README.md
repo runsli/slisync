@@ -7,6 +7,7 @@
 | [en/VISION.md](./en/VISION.md) | [zh/VISION.md](./zh/VISION.md) |
 | [en/ROADMAP.md](./en/ROADMAP.md) | [zh/ROADMAP.md](./zh/ROADMAP.md) |
 | [en/export.md](./en/export.md) | [zh/export.md](./zh/export.md) |
+| [en/local-first.md](./en/local-first.md) | [zh/local-first.md](./zh/local-first.md) |
 
 | Entry | English | 中文 |
 |-------|---------|------|

@@ -28,7 +28,7 @@
     "prestart": "node scripts/check-node.mjs",
     "start": "NODE_ENV=production tsx server.ts",
     "build:packages": "npm run build -w @slisync/sync-schema && npm run build -w @slisync/sync-sdk && npm run build -w @slisync/sync-server",
-    "test": "node --import tsx --test tests/unit/export-chunks.test.ts tests/integration/sync-graph.test.ts tests/integration/protocol-version.test.ts tests/integration/audit-crdt-authority.test.ts tests/integration/scoped-memory-presence.test.ts tests/integration/crdt-offline-outbox.test.ts tests/integration/sync-capabilities.test.ts",
+    "test": "node --import tsx --test tests/unit/export-chunks.test.ts tests/unit/indexeddb-room-store.test.ts tests/unit/persistent-crdt-outbox.test.ts tests/integration/crdt-local-persistence.test.ts tests/integration/sync-graph.test.ts tests/integration/protocol-version.test.ts tests/integration/audit-crdt-authority.test.ts tests/integration/scoped-memory-presence.test.ts tests/integration/crdt-offline-outbox.test.ts tests/integration/sync-capabilities.test.ts",
     "test:integration": "npm run test",
     "test:cluster": "node --import tsx --test tests/integration/redis-cluster.test.ts",
     "lint": "eslint",

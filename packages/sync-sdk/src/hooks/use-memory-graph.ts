@@ -17,7 +17,7 @@ export type UseMemoryGraphOptions = {
 export function useMemoryGraph(options: UseMemoryGraphOptions) {
   const { graphId, actorId, syncReady, getDocument } = options;
   const [snapshot, setSnapshot] = useState<MemoryGraphSnapshot | null>(null);
-  const doc = syncReady ? getDocument() : null;
+  const doc = getDocument();
 
   const graph = useMemo(() => {
     if (!doc) return null;
@@ -38,6 +38,8 @@ export function useMemoryGraph(options: UseMemoryGraphOptions) {
   return {
     graph,
     snapshot,
-    ready: syncReady && graph != null,
+    /** Graph is editable once the CRDT doc exists (including before server sync). */
+    ready: graph != null,
+    syncReady,
   };
 }

@@ -34,13 +34,10 @@ export function bindCrdtActions<T extends SharedMemoryState>(
 
     if (partial.message !== undefined) {
       const next = partial.message as string;
-      const synced = isSynced();
 
       store.setState({
         data: { ...store.getState().data, message: next } as T,
       });
-
-      if (!synced) return;
 
       if (options?.debounceMs) {
         if (debounceTimer) clearTimeout(debounceTimer);
