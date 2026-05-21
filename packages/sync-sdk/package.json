@@ -1,0 +1,96 @@
+{
+  "name": "@slisync/sync-sdk",
+  "version": "0.1.0",
+  "description": "Slisync client SDK for room realtime sync and Memory Graph",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./protocol": {
+      "types": "./src/protocol.ts",
+      "import": "./src/protocol.ts"
+    },
+    "./patch": {
+      "types": "./src/patch.ts",
+      "import": "./src/patch.ts"
+    },
+    "./crdt": {
+      "types": "./src/crdt/index.ts",
+      "import": "./src/crdt/index.ts"
+    },
+    "./agent": {
+      "types": "./src/agent/index.ts",
+      "import": "./src/agent/index.ts"
+    },
+    "./shared-memory-state": {
+      "types": "./src/shared-memory-state.ts",
+      "import": "./src/shared-memory-state.ts"
+    },
+    "./graph": {
+      "types": "./src/graph/index.ts",
+      "import": "./src/graph/index.ts"
+    },
+    "./graph/layout-tree": {
+      "types": "./src/graph/layout-tree.ts",
+      "import": "./src/graph/layout-tree.ts"
+    }
+  },
+  "files": ["dist", "src", "README.md"],
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./protocol": {
+        "types": "./dist/protocol.d.ts",
+        "import": "./dist/protocol.js"
+      },
+      "./patch": {
+        "types": "./dist/patch.d.ts",
+        "import": "./dist/patch.js"
+      },
+      "./crdt": {
+        "types": "./dist/crdt/index.d.ts",
+        "import": "./dist/crdt/index.js"
+      },
+      "./agent": {
+        "types": "./dist/agent/index.d.ts",
+        "import": "./dist/agent/index.js"
+      },
+      "./shared-memory-state": {
+        "types": "./dist/shared-memory-state.d.ts",
+        "import": "./dist/shared-memory-state.js"
+      },
+      "./graph": {
+        "types": "./dist/graph/index.d.ts",
+        "import": "./dist/graph/index.js"
+      },
+      "./graph/layout-tree": {
+        "types": "./dist/graph/layout-tree.d.ts",
+        "import": "./dist/graph/layout-tree.js"
+      }
+    },
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "npm run build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@slisync/sync-schema": "^0.1.0",
+    "fast-json-patch": "^3.1.1",
+    "socket.io-client": "^4.8.3",
+    "yjs": "^13.6.30",
+    "zustand": "^5.0.13"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19"
+  }
+}

@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test-and-export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm test
+
+      - name: Export memory chunks (fixture, no dev server)
+        run: npm run export:chunks:ci -- --out /tmp/slisync-chunks-export
+
+      - name: Verify fixture export output
+        run: |
+          test "$(find /tmp/slisync-chunks-export -name '*.md' | wc -l)" -ge 2
