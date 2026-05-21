@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  clearLocalRoom,
   createSyncStore,
   getSyncEndpoint,
   useSync,
@@ -66,7 +67,7 @@ function conflictLabel(reason: string) {
 
 export function SyncDemo() {
   const [strategy, setStrategy] = useState<SyncStrategy>("crdt");
-  const store = useMemo(() => createSyncStore(initialState), [strategy]);
+  const syncStore = useMemo(() => createSyncStore(initialState), [strategy]);
 
   const {
     data,
@@ -79,6 +80,8 @@ export function SyncDemo() {
     lastGraphActivity,
     presenceMembers,
     outboxSize,
+    localRestored,
+    lastSyncedAt,
     notifyGraphActivity,
     patchData,
     mounted,
@@ -88,10 +91,11 @@ export function SyncDemo() {
     roomId: ROOM_ID,
     defaultState: initialState,
     strategy,
-    store,
+    store: syncStore,
   });
 
   const [syncEndpoint, setSyncEndpoint] = useState("");
+  const [localCacheNotice, setLocalCacheNotice] = useState<string | null>(null);
   useEffect(() => {
     if (mounted) setSyncEndpoint(getSyncEndpoint());
   }, [mounted]);
@@ -99,24 +103,49 @@ export function SyncDemo() {
   useEffect(() => {
     if (!lastAgentActivity) return;
     const timer = setTimeout(() => {
-      store.getState().setLastAgentActivity(null);
+      syncStore.getState().setLastAgentActivity(null);
     }, 5000);
     return () => clearTimeout(timer);
-  }, [store, lastAgentActivity?.entry.at]);
+  }, [syncStore, lastAgentActivity?.entry.at]);
 
   useEffect(() => {
     if (!lastGraphActivity) return;
     const timer = setTimeout(() => {
-      store.getState().setLastGraphActivity(null);
+      syncStore.getState().setLastGraphActivity(null);
     }, 5000);
     return () => clearTimeout(timer);
-  }, [store, lastGraphActivity?.at]);
+  }, [syncStore, lastGraphActivity?.at]);
 
   const activeHint = STRATEGIES.find((s) => s.id === strategy)?.hint ?? "";
   const canEditCounter = strategy === "crdt" ? syncReady : mounted;
   const displayMessage = mounted ? data.message : initialState.message;
   const displayStatus = mounted ? status : "disconnected";
   const displayVersion = mounted ? version : 0;
+
+  const localRestoreLabel =
+    localRestored === null
+      ? "检测本地缓存…"
+      : localRestored
+        ? "已从本地恢复"
+        : "无本地数据";
+
+  const lastSyncedLabel =
+    lastSyncedAt != null
+      ? new Date(lastSyncedAt).toLocaleString()
+      : "尚未与服务端同步";
+
+  async function handleClearLocalCache() {
+    try {
+      await clearLocalRoom(ROOM_ID);
+      syncStore.getState().setLocalRestored(false);
+      syncStore.getState().setLastSyncedAt(null);
+      setLocalCacheNotice("已清除本 room 的本地缓存（IndexedDB）");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "清除失败";
+      setLocalCacheNotice(message);
+    }
+    setTimeout(() => setLocalCacheNotice(null), 4000);
+  }
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-8">
@@ -216,6 +245,44 @@ export function SyncDemo() {
           </span>
         ) : null}
       </div>
+
+      {strategy === "crdt" && mounted ? (
+        <section className="space-y-3 rounded-xl border border-teal-200 bg-teal-50/50 p-4 dark:border-teal-900/50 dark:bg-teal-950/30">
+          <p className="text-xs font-medium uppercase tracking-wide text-teal-800 dark:text-teal-200">
+            Local-first（CRDT）
+          </p>
+          <p className="text-sm text-teal-900 dark:text-teal-100">
+            刷新页面后，本 room 的 message / counter / Memory Graph 编辑会先从 IndexedDB
+            恢复，再与服务端合并同步。
+          </p>
+          <dl className="grid gap-1 text-xs text-teal-900/90 dark:text-teal-100/90 sm:grid-cols-2">
+            <div>
+              <dt className="text-teal-700/80 dark:text-teal-300/80">本地状态</dt>
+              <dd className="font-medium">{localRestoreLabel}</dd>
+            </div>
+            <div>
+              <dt className="text-teal-700/80 dark:text-teal-300/80">离线队列</dt>
+              <dd className="font-medium">{outboxSize}</dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt className="text-teal-700/80 dark:text-teal-300/80">上次同步</dt>
+              <dd className="font-medium">{lastSyncedLabel}</dd>
+            </div>
+          </dl>
+          <button
+            type="button"
+            className="rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-sm text-teal-900 hover:bg-teal-50 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-100 dark:hover:bg-teal-900"
+            onClick={() => void handleClearLocalCache()}
+          >
+            清除本 room 本地缓存
+          </button>
+          {localCacheNotice ? (
+            <p className="text-xs text-teal-800 dark:text-teal-200" role="status">
+              {localCacheNotice}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
 
       {strategy === "crdt" && mounted && presenceMembers.length > 0 ? (
         <section className="flex flex-wrap gap-2 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">

@@ -84,6 +84,8 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
     this.synced = false;
     store.getState().setSyncReady(false);
     store.getState().setStatus("connecting");
+    store.getState().setLocalRestored(null);
+    store.getState().setLastSyncedAt(null);
 
     this.doc = new Y.Doc();
 
@@ -175,11 +177,17 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
     if (!this.doc) return;
 
     if (!this.localStore) {
+      store.getState().setLocalRestored(null);
       initSharedMemoryDoc(this.doc, defaultState as SharedMemoryState);
       return;
     }
 
     const record = await this.localStore.get(roomId);
+    store.getState().setLocalRestored(Boolean(record?.docSnapshot));
+    if (record?.lastSyncedAt != null) {
+      store.getState().setLastSyncedAt(record.lastSyncedAt);
+    }
+
     if (record?.docSnapshot) {
       try {
         applyServerSnapshotToDoc(this.doc, record.docSnapshot);
@@ -387,9 +395,11 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
     if (!socket?.connected) return;
 
     const pending = this.outbox.drain();
+    const syncedAt = Date.now();
     if (pending.length === 0) {
       this.options.store.getState().setOutboxSize(0);
-      void this.persistLocalRoom({ lastSyncedAt: Date.now(), clearOutbox: true });
+      this.options.store.getState().setLastSyncedAt(syncedAt);
+      void this.persistLocalRoom({ lastSyncedAt: syncedAt, clearOutbox: true });
       return;
     }
 
@@ -397,7 +407,8 @@ export class CrdtSyncClient<T extends SharedMemoryState> {
       socket.emit(SYNC_EVENTS.CRDT_UPDATE, { roomId, update });
     }
     this.options.store.getState().setOutboxSize(0);
-    void this.persistLocalRoom({ lastSyncedAt: Date.now(), clearOutbox: true });
+    this.options.store.getState().setLastSyncedAt(syncedAt);
+    void this.persistLocalRoom({ lastSyncedAt: syncedAt, clearOutbox: true });
   }
 
   private scheduleSnapshotPersist() {

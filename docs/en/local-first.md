@@ -13,8 +13,30 @@ Slisync is adding **client-side persistence** so CRDT room state and pending upd
 | Vision 2 | Local-first: IndexedDB, offline queue, replay on connect |
 | Engineering | Extends **P2-9** (CRDT outbox + reconnect flush) with durable storage |
 
-Today: `CrdtUpdateOutbox` is in-memory only; `disconnect()` clears the queue.  
-Next phases wire IndexedDB and hydrate `Y.Doc` before `CRDT_JOIN`.
+Enabled by default in the browser: after refresh or offline edits, the client hydrates `Y.Doc` and the outbox from IndexedDB, then merges with the server on reconnect.
+
+---
+
+## Architecture (Phase 3–5)
+
+```mermaid
+flowchart TB
+  subgraph browser [Browser Demo / useSync]
+    UI[SyncDemo]
+    Client[CrdtSyncClient]
+    IDB[(IndexedDB slisync.rooms)]
+    Outbox[PersistentCrdtOutbox]
+  end
+  subgraph server [Sync Server]
+    Room[CrdtRoomStore]
+  end
+  UI --> Client
+  Client --> IDB
+  Client --> Outbox
+  Outbox --> IDB
+  Client -->|CRDT_JOIN / CRDT_UPDATE| Room
+  Room --> Client
+```
 
 ---
 
@@ -104,9 +126,31 @@ Re-evaluate the [`idb`](https://github.com/jakearchibald/idb) wrapper only if up
 | **2** ✅ | `PersistentCrdtOutbox`, `createCrdtOutbox()`, `InMemoryCrdtOutbox` |
 | **3** ✅ | `CrdtSyncClient` hydrate + snapshot persist; `useSync({ localPersistence })` |
 | **4** ✅ | Integration tests (IndexedDB refresh / outbox flush) |
-| **5** | Demo UI + ROADMAP ✅ for Vision 2 |
+| **5** ✅ | Demo local-first panel + clear cache; ROADMAP Vision 2 ✅ |
 
 **Follow-up:** export chunks from local store; multi-tab coordination.
+
+---
+
+## Manual verification (Demo)
+
+1. Run `npm run dev`, open [http://localhost:3000](http://localhost:3000), select **CRDT**.
+2. Edit **Message** or add a Memory Graph chunk; wait for `connected` and a **last sync** timestamp.
+3. DevTools → **Network** → **Offline**, edit Message again.
+4. **Hard refresh** the page.
+5. Go back online: edits remain; outbox returns to `0`; a second browser window sees merged state.
+6. Click **清除本 room 本地缓存** (clear local cache), refresh — local status should show **无本地数据** (no local data).
+
+---
+
+## Troubleshooting
+
+| Symptom | Action |
+|---------|--------|
+| `QuotaExceededError` | Storage full; use Demo **clear local cache** or delete IndexedDB database `slisync` in DevTools |
+| Default message after refresh | Ensure CRDT strategy; cache was cleared; incognito has no prior data |
+| Outbox never drains | Check sync endpoint; read the connection error banner |
+| Differs from server | Server CRDT is merge authority; pending outbox flushes after `syncReady` |
 
 ---
 
@@ -131,7 +175,7 @@ npx tsx --test tests/integration/crdt-indexeddb-persistence.test.ts
 Integration tests use devDependency `fake-indexeddb` (`import "fake-indexeddb/auto"`).  
 `npm run test:cluster` does not require IndexedDB.
 
-CI runs `npm test` in `.github/workflows/ci.yml`.
+CI runs `npm test` in `.github/workflows/ci.yml` (`--test-concurrency=1` avoids fake-indexeddb races).
 
 ---
 

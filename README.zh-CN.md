@@ -48,7 +48,7 @@ npm install
 npm run dev
 ```
 
-打开 [http://localhost:3000](http://localhost:3000)。Demo 支持 CRDT/LWW 对比、Memory Graph（树形/力导向）、scoped memory、Presence、离线队列等。
+打开 [http://localhost:3000](http://localhost:3000)。Demo 支持 CRDT/LWW 对比、Memory Graph（树形/力导向）、scoped memory、Presence、离线队列等。**Local-first（CRDT）**：刷新不丢编辑，见 [docs/zh/local-first.md](./docs/zh/local-first.md)。
 
 ```bash
 npm run sync:server

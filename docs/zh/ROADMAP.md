@@ -25,7 +25,7 @@
 | 愿景 | 主题 | 状态 | 本仓库实现 |
 |------|------|------|------------|
 | **1** | Realtime Sync | ✅ | Socket.IO、`sync:crdt-join` — **Phase 1** |
-| **2** | Local-first | 🟡 | **P2-9** outbox；尚无 IndexedDB |
+| **2** | Local-first | ✅ | **P2-9** outbox + IndexedDB hydrate / flush — [local-first.md](./local-first.md) |
 | **3** | Patch Sync | ✅ | `sync:patch` — **Phase 2** |
 
 ### 第二阶段：数据一致性与持久化
@@ -77,7 +77,7 @@
 ## 下一步（非承诺排期）
 
 1. ✅ 青笺导出 M0–M2 — 见 [export.md](./export.md)  
-2. IndexedDB + outbox 统一  
+2. ~~IndexedDB + outbox 统一~~（已完成，见 [local-first.md](./local-first.md)）  
 3. Demo 以 scoped memory 为主  
 4. Agent 任务总线  
 5. 可选 PostgreSQL / HTTP export（M4）  

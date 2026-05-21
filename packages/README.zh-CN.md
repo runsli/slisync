@@ -89,6 +89,24 @@ npm run graph:traverse:http -- --start <nodeId>
 - `sync:presence-*`
 - CRDT outbox · `useSync().presenceMembers` · `outboxSize`
 
+### Local-first（愿景 2）
+
+```ts
+const { patchData, outboxSize, localRestored, lastSyncedAt } = useSync({
+  roomId: "my-project",
+  defaultState: { message: "Hello", counter: 0 },
+  strategy: "crdt",
+  localPersistence: true, // 浏览器默认；false 则仅内存
+});
+```
+
+- `localPersistence: true` — 有 IndexedDB 时用 `slisync` / `rooms`
+- `localRestored` — hydrate 前为 `null`；有本地快照为 `true`
+- `lastSyncedAt` — 上次成功与服务端同步（Unix ms）
+- `clearLocalRoom(roomId)` — 删除本地记录
+
+详见 [docs/zh/local-first.md](../docs/zh/local-first.md)
+
 ---
 
 ## Socket 事件
@@ -102,7 +120,7 @@ npm run graph:traverse:http -- --start <nodeId>
 ## 测试
 
 ```bash
-npm test   # 24 cases
+npm test   # 46 cases（含 local-first）
 ```
 
 ---

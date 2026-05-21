@@ -24,7 +24,7 @@ This document maps the **12-phase product vision** in [VISION.md](./VISION.md) t
 | Vision | Theme | Status | In this repo |
 |--------|-------|--------|--------------|
 | **1** | Realtime Sync | ✅ | Socket.IO rooms, `sync:join` / `sync:crdt-join`, reconnect — **eng. Phase 1** |
-| **2** | Local-first | 🟡 | **P2-9** CRDT outbox + reconnect flush; **no IndexedDB yet** |
+| **2** | Local-first | ✅ | **P2-9** outbox + IndexedDB hydrate / flush — [local-first.md](./local-first.md) |
 | **3** | Patch Sync | ✅ | `sync:patch` RFC 6902 — **eng. Phase 2** |
 
 ### Stability

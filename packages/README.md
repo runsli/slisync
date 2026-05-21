@@ -227,7 +227,25 @@ Demo: `GraphTreeView` (tree / force), `GraphNodeDetail`, `SyncStrategyPanel`.
 | `sync:presence-*` | Room membership |
 | CRDT outbox | Queue while offline / pre-sync; FIFO flush on `markSynced` |
 
-`useSync()` → `presenceMembers`, `outboxSize`
+### Local-first (Vision 2)
+
+```ts
+const { patchData, outboxSize, localRestored, lastSyncedAt } = useSync({
+  roomId: "my-project",
+  defaultState: { message: "Hello", counter: 0 },
+  strategy: "crdt",
+  localPersistence: true, // default in browser; false for memory-only
+});
+```
+
+- `localPersistence: true` — IndexedDB when available (`slisync` / `rooms`)
+- `localRestored` — `null` before hydrate; `true` if a local snapshot was applied
+- `lastSyncedAt` — Unix ms of last successful server sync
+- `clearLocalRoom(roomId)` — delete persisted record
+
+Details: [docs/en/local-first.md](../docs/en/local-first.md)
+
+`useSync()` → `presenceMembers`, `outboxSize`, `localRestored`, `lastSyncedAt`
 
 ---
 

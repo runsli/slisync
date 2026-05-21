@@ -13,8 +13,30 @@ Slisync 正在为 CRDT room 增加**客户端持久化**，使房间状态与待
 | 愿景 2 | Local-first：IndexedDB、离线队列、联网后回放 |
 | 工程 | 在 **P2-9**（CRDT outbox + 重连 flush）之上增加持久化 |
 
-现状：`CrdtUpdateOutbox` 仅在内存；`disconnect()` 会清空队列。  
-后续 Phase 将接入 IndexedDB，并在 `CRDT_JOIN` 前 hydrate `Y.Doc`。
+浏览器端默认开启：刷新或断网编辑后，先从 IndexedDB 恢复 `Y.Doc` 与 outbox，联网再与服务端 CRDT 合并。
+
+---
+
+## 架构（Phase 3–5）
+
+```mermaid
+flowchart TB
+  subgraph browser [Browser Demo / useSync]
+    UI[SyncDemo]
+    Client[CrdtSyncClient]
+    IDB[(IndexedDB slisync.rooms)]
+    Outbox[PersistentCrdtOutbox]
+  end
+  subgraph server [Sync Server]
+    Room[CrdtRoomStore]
+  end
+  UI --> Client
+  Client --> IDB
+  Client --> Outbox
+  Outbox --> IDB
+  Client -->|CRDT_JOIN / CRDT_UPDATE| Room
+  Room --> Client
+```
 
 ---
 
@@ -104,9 +126,31 @@ Slisync 正在为 CRDT room 增加**客户端持久化**，使房间状态与待
 | **2** ✅ | `PersistentCrdtOutbox`、`createCrdtOutbox()`、`InMemoryCrdtOutbox` |
 | **3** ✅ | `CrdtSyncClient` hydrate + 快照持久化；`useSync({ localPersistence })` |
 | **4** ✅ | 集成测试（IndexedDB 刷新 / outbox flush） |
-| **5** | Demo UI + ROADMAP 愿景 2 标 ✅ |
+| **5** ✅ | Demo 显示本地状态 / 清除缓存；ROADMAP 愿景 2 ✅ |
 
 **后续：** 从本地存储导出 chunks；多 Tab 协调。
+
+---
+
+## 手动验收（Demo）
+
+1. `npm run dev`，打开 [http://localhost:3000](http://localhost:3000)，选择 **CRDT**。
+2. 修改 **Message** 或添加 Memory Graph chunk，等待状态为 `connected` 且「上次同步」有时间戳。
+3. 打开 DevTools → **Network** → **Offline**，再改 Message。
+4. **硬刷新**页面（Cmd+R / F5）。
+5. 恢复网络：离线编辑仍在；「离线队列」最终归零；另一浏览器窗口可看到合并结果。
+6. 点击 **清除本 room 本地缓存**，刷新后「本地状态」应为 **无本地数据**。
+
+---
+
+## 故障排查
+
+| 现象 | 处理 |
+|------|------|
+| `QuotaExceededError` / 写入失败 | 浏览器存储已满；Demo 点「清除本 room 本地缓存」，或 DevTools → Application → IndexedDB → 删除 `slisync` |
+| 刷新后仍是默认文案 | 确认策略为 CRDT；未点清除缓存；无痕模式每次无本地数据属正常 |
+| 离线队列一直不归零 | 检查 sync 端点是否可达；查看红色连接错误条 |
+| 与服务端内容不一致 | 服务端 CRDT 为合并权威；本地未 flush 的 outbox 会在 `syncReady` 后上传 |
 
 ---
 
@@ -138,7 +182,7 @@ npx tsx --test tests/unit/indexeddb-room-store.test.ts \
 Node 集成测试使用 devDependency `fake-indexeddb`（文件顶部 `import "fake-indexeddb/auto"`）。  
 `npm run test:cluster` 不依赖 IndexedDB。
 
-CI：`.github/workflows/ci.yml` 已执行 `npm test`。
+CI：`.github/workflows/ci.yml` 已执行 `npm test`（`--test-concurrency=1`，避免 fake-indexeddb 并行竞态）。
 
 ---
 

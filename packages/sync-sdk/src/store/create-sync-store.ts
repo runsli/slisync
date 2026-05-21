@@ -30,6 +30,10 @@ export interface SyncStoreState<T> {
   presenceMembers: PresenceMember[];
   /** Queued CRDT updates while offline or before first sync. */
   outboxSize: number;
+  /** CRDT local-first: null before hydrate; true if a local snapshot was applied. */
+  localRestored: boolean | null;
+  /** CRDT local-first: Unix ms of last successful server sync, or null. */
+  lastSyncedAt: number | null;
 }
 
 export interface SyncStoreActions<T> {
@@ -55,6 +59,8 @@ export interface SyncStoreActions<T> {
   setLastGraphActivity: (payload: GraphActivityPayload | null) => void;
   setPresenceMembers: (members: PresenceMember[]) => void;
   setOutboxSize: (size: number) => void;
+  setLocalRestored: (localRestored: boolean | null) => void;
+  setLastSyncedAt: (lastSyncedAt: number | null) => void;
   /** Internal: wire socket emitters after local mutation. */
   bindEmitter: (handlers: {
     emitPatch: (patch: Operation[], baseVersion: number) => void;
@@ -115,6 +121,8 @@ export function createSyncStore<T extends Record<string, unknown>>(
     lastGraphActivity: null,
     presenceMembers: [],
     outboxSize: 0,
+    localRestored: null,
+    lastSyncedAt: null,
     /** Assigned on client after mount (avoids SSR hydration mismatch). */
     clientId: "",
 
@@ -182,6 +190,8 @@ export function createSyncStore<T extends Record<string, unknown>>(
     setLastGraphActivity: (lastGraphActivity) => set({ lastGraphActivity }),
     setPresenceMembers: (presenceMembers) => set({ presenceMembers }),
     setOutboxSize: (outboxSize) => set({ outboxSize }),
+    setLocalRestored: (localRestored) => set({ localRestored }),
+    setLastSyncedAt: (lastSyncedAt) => set({ lastSyncedAt }),
 
     bindEmitter: (handlers) => {
       emitPatch = handlers.emitPatch;

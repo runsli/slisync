@@ -38,7 +38,7 @@ Details: [docs/en/VISION.md](./docs/en/VISION.md#2-why-it-matters).
 
 | Vision | Theme | This repo |
 |--------|-------|-----------|
-| 1–3 | Realtime / local-first / patch | ✅ realtime + patch; 🟡 offline outbox (no IndexedDB yet) |
+| 1–3 | Realtime / local-first / patch | ✅ realtime + patch + [IndexedDB local-first](./docs/en/local-first.md) |
 | 4–6 | Persistence / CRDT / SDK | ✅ |
 | 7–8 | Memory layer / graph | 🟡 structured chunks; ✅ graph + HTTP |
 | 9 | Semantic search | ⛔ excluded |
@@ -60,7 +60,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-Demo: **CRDT / LWW** comparison, shared `message`/`counter`, Memory Graph (tree / force-directed), workspace/session/chunk, Presence, offline queue, agent/graph toasts.
+Demo: **CRDT / LWW** comparison, shared `message`/`counter`, Memory Graph (tree / force-directed), workspace/session/chunk, Presence, offline queue, agent/graph toasts. **Local-first (CRDT):** edits survive page refresh via IndexedDB — see [docs/en/local-first.md](./docs/en/local-first.md).
 
 Standalone sync server:
 
@@ -165,7 +165,7 @@ slisync/
 
 ## Principles
 
-- **Local-first direction** — offline outbox shipped; IndexedDB planned.
+- **Local-first direction** — IndexedDB snapshot + outbox persistence in the browser ([local-first.md](./docs/en/local-first.md)).
 - **Simple API** — Demo in minutes.
 - **Stability** — protocol version, CRDT authority, reconnect, tests.
 - **Out of scope** — Web3, chat super-app, vectors / embeddings / reasoning.

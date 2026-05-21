@@ -75,6 +75,8 @@ export function useSync<T extends SharedMemoryState>(
   const lastGraphActivity = useStore(store, (s) => s.lastGraphActivity);
   const presenceMembers = useStore(store, (s) => s.presenceMembers);
   const outboxSize = useStore(store, (s) => s.outboxSize);
+  const localRestored = useStore(store, (s) => s.localRestored);
+  const lastSyncedAt = useStore(store, (s) => s.lastSyncedAt);
 
   useEffect(() => {
     if (!lastConflict || strategy === "crdt") return;
@@ -116,6 +118,8 @@ export function useSync<T extends SharedMemoryState>(
     lastGraphActivity: strategy === "crdt" ? lastGraphActivity : null,
     presenceMembers: strategy === "crdt" ? presenceMembers : [],
     outboxSize: strategy === "crdt" ? outboxSize : 0,
+    localRestored: strategy === "crdt" ? localRestored : null,
+    lastSyncedAt: strategy === "crdt" ? lastSyncedAt : null,
     getCrdtDocument: strategy === "crdt" ? getCrdtDocument : () => null,
     notifyGraphActivity:
       strategy === "crdt" ? notifyGraphActivity : () => undefined,

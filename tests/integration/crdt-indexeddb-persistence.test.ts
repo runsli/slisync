@@ -35,6 +35,7 @@ describe("CRDT IndexedDB persistence", () => {
   let closeServer: () => Promise<void> = async () => {};
 
   before(async () => {
+    await clearSlisyncDb();
     const server = await startTestSyncServer();
     baseUrl = server.baseUrl;
     closeServer = server.close;
@@ -56,13 +57,12 @@ describe("CRDT IndexedDB persistence", () => {
 
     const seedDoc = new Y.Doc();
     initSharedMemoryDoc(seedDoc, DEFAULT_STATE);
-    const snapshotDefault = encodeUpdate(encodeDocumentSnapshot(seedDoc));
     updateMessage(seedDoc, DEFAULT_STATE.message, offlineMessage);
     const outboxUpdate = encodeUpdate(Y.encodeStateAsUpdate(seedDoc));
 
     await idb.put({
       ...createEmptyRoomLocalRecord(roomId),
-      docSnapshot: snapshotDefault,
+      docSnapshot: encodeUpdate(encodeDocumentSnapshot(seedDoc)),
       outbox: [outboxUpdate],
     });
     seedDoc.destroy();
@@ -82,6 +82,7 @@ describe("CRDT IndexedDB persistence", () => {
       client.connect();
       await waitFor(() => store.getState().syncReady);
       await waitFor(() => store.getState().outboxSize === 0);
+      await waitFor(() => store.getState().data.message === offlineMessage);
 
       await reader.join();
 
