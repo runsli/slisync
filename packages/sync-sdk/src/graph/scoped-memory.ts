@@ -36,8 +36,8 @@ export function buildScopedMemoryOps(
   const workspace: MemoryNode = {
     id: wsNodeId,
     kind: "workspace",
-    title: "Demo Workspace",
-    body: "Shared AI memory workspace",
+    title: "演示工作区",
+    body: "多 Agent 在同一项目内共享记忆的工作区根节点",
     createdAt: at,
     updatedAt: at,
     createdBy: actorId,
@@ -50,7 +50,7 @@ export function buildScopedMemoryOps(
   const session: MemoryNode = {
     id: sessNodeId,
     kind: "session",
-    title: "Demo Session",
+    title: "当前协作会话",
     createdAt: at,
     updatedAt: at,
     createdBy: actorId,
@@ -63,8 +63,9 @@ export function buildScopedMemoryOps(
   const chunk1 = buildChunkNode(actorId, chunk1Id, {
     workspaceId,
     sessionId,
-    title: "User asked about CRDT sync",
-    content: "Explain Yjs merge vs LWW optimistic locking for shared memory.",
+    title: "产品目标：Demo 以 Memory Graph 为主",
+    content:
+      "用户希望首屏展示 workspace → session → memory_chunk，弱化 message/counter 演示字段。",
     source: "chat",
     importance: 0.9,
   });
@@ -72,8 +73,9 @@ export function buildScopedMemoryOps(
   const chunk2 = buildChunkNode(actorId, chunk2Id, {
     workspaceId,
     sessionId,
-    title: "Agent summarized graph ops",
-    content: "Agent pushed workspace/session/chunk nodes via graphOps.",
+    title: "Planning Agent：任务拆解",
+    content:
+      "1. 重排 Demo 信息架构\n2. 支持 chunk 内联编辑\n3. 第二窗口验证 CRDT 同步",
     source: "agent",
     importance: 0.7,
   });

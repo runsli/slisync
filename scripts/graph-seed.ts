@@ -19,11 +19,14 @@ const SYNC_URL =
   process.env.NEXT_PUBLIC_SYNC_URL?.trim() ||
   "http://127.0.0.1:3000";
 const USE_SCOPED = process.env.SYNC_GRAPH_SCOPED !== "0";
+/** Aligns with Demo UI MemoryScopeBar defaults. */
+const DEMO_WORKSPACE_ID = "ws-demo";
+const DEMO_SESSION_ID = "sess-demo";
 
 async function main() {
   console.log(`[graph:seed] sync=${SYNC_URL} room=${ROOM_ID}`);
   const graphOps = USE_SCOPED
-    ? buildScopedMemoryOps(AGENT_ID)
+    ? buildScopedMemoryOps(AGENT_ID, DEMO_WORKSPACE_ID, DEMO_SESSION_ID)
     : buildDemoGraphOps(AGENT_ID);
 
   const ack = await pushAgentMemory({

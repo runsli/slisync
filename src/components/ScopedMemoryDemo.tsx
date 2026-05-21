@@ -1,15 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  buildScopedMemoryOps,
-  filterNodesByScope,
-  useMemoryGraph,
-} from "@slisync/sync-sdk";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { filterNodesByScope, useMemoryGraph } from "@slisync/sync-sdk";
 import type { MemoryScope } from "@slisync/sync-schema";
 import { MemoryChunkEditor } from "./MemoryChunkEditor";
 import { MemoryGraphPanel } from "./MemoryGraphPanel";
 import { MemoryScopeBar } from "./MemoryScopeBar";
+import {
+  demoSeedStorageKey,
+  demoWelcomeDismissedKey,
+  seedDemoScopedMemory,
+  type SeedDemoScopedMemoryResult,
+} from "./seed-demo-scoped-memory";
 import type { GraphLayoutMode } from "./GraphTreeView";
 
 const DEFAULT_SCOPE: MemoryScope = {
@@ -45,6 +47,17 @@ export function ScopedMemoryDemo({
   const [rootId, setRootId] = useState<string | null>(null);
   const [layoutMode, setLayoutMode] = useState<GraphLayoutMode>("tree");
   const [editorFocusToken, setEditorFocusToken] = useState(0);
+  const [welcomeDismissed, setWelcomeDismissed] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(demoWelcomeDismissedKey(graphId)) === "1") {
+        setWelcomeDismissed(true);
+      }
+    } catch {
+      /* sessionStorage unavailable */
+    }
+  }, [graphId]);
 
   const activeNodes = useMemo(
     () => (snapshot?.nodes ?? []).filter((n) => !n.deletedAt),
@@ -76,39 +89,60 @@ export function ScopedMemoryDemo({
   const selectedNode =
     displayNodes.find((n) => n.id === (selectedId ?? traverseRoot)) ?? null;
 
-  const seedScoped = () => {
-    if (!graph) return;
-    const ops = buildScopedMemoryOps(actorId, scope.workspaceId, scope.sessionId);
-    for (const op of ops) {
-      if (op.op === "upsertNode") {
-        graph.upsertNode({
-          id: op.node.id,
-          kind: op.node.kind,
-          title: op.node.title,
-          body: op.node.body,
-          data: op.node.data,
-          tags: op.node.tags,
-        });
-      } else if (op.op === "upsertEdge") {
-        graph.link(op.edge.from, op.edge.to, op.edge.relation, {
-          edgeId: op.edge.id,
-          unique: op.edge.unique,
-        });
-      }
-    }
-    let firstChunkId: string | null = null;
-    for (const op of ops) {
-      if (op.op === "upsertNode" && op.node.kind === "memory_chunk" && !firstChunkId) {
-        firstChunkId = op.node.id;
-      }
-    }
-    const ws = activeNodes.find((n) => n.kind === "workspace") ?? workspace;
-    setRootId(ws?.id ?? null);
-    if (firstChunkId) {
-      setSelectedId(firstChunkId);
+  const applySeedResult = useCallback((result: SeedDemoScopedMemoryResult) => {
+    if (result.workspaceNodeId) setRootId(result.workspaceNodeId);
+    if (result.firstChunkId) {
+      setSelectedId(result.firstChunkId);
       setEditorFocusToken((t) => t + 1);
     }
-    notifyGraphActivity?.("seeded scoped memory workspace");
+  }, []);
+
+  const runSeed = useCallback(
+    (markAutoSeed: boolean) => {
+      if (!graph) return;
+      const result = seedDemoScopedMemory(graph, actorId, scope);
+      applySeedResult(result);
+      if (markAutoSeed) {
+        try {
+          sessionStorage.setItem(demoSeedStorageKey(graphId), "1");
+        } catch {
+          /* ignore */
+        }
+      }
+      notifyGraphActivity?.(
+        markAutoSeed ? "auto-seeded scoped memory" : "seeded scoped memory workspace",
+      );
+    },
+    [graph, actorId, scope, graphId, applySeedResult, notifyGraphActivity],
+  );
+
+  const seedScoped = useCallback(() => runSeed(false), [runSeed]);
+
+  useEffect(() => {
+    if (!syncReady || !graph || !ready) return;
+    if (activeNodes.length > 0) return;
+    try {
+      if (sessionStorage.getItem(demoSeedStorageKey(graphId))) return;
+    } catch {
+      return;
+    }
+    runSeed(true);
+  }, [
+    syncReady,
+    ready,
+    graph,
+    activeNodes.length,
+    graphId,
+    runSeed,
+  ]);
+
+  const dismissWelcome = () => {
+    setWelcomeDismissed(true);
+    try {
+      sessionStorage.setItem(demoWelcomeDismissedKey(graphId), "1");
+    } catch {
+      /* ignore */
+    }
   };
 
   const addChunk = () => {
@@ -117,8 +151,8 @@ export function ScopedMemoryDemo({
     const chunk = graph.upsertChunk({
       workspaceId: scope.workspaceId,
       sessionId: scope.sessionId,
-      title: "New memory chunk",
-      content: `Chunk at ${new Date().toLocaleTimeString()}`,
+      title: "新建记忆块",
+      content: `创建于 ${new Date().toLocaleString()}`,
       source: "ui",
     });
     if (parent) {
@@ -148,6 +182,36 @@ export function ScopedMemoryDemo({
         </p>
       </div>
 
+      {!welcomeDismissed ? (
+        <div
+          role="region"
+          aria-label="使用引导"
+          className="relative rounded-lg border border-violet-200 bg-white/80 p-3 pr-10 text-sm dark:border-violet-800 dark:bg-violet-950/50"
+        >
+          <button
+            type="button"
+            aria-label="关闭引导"
+            className="absolute right-2 top-2 rounded px-1.5 text-xs text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800"
+            onClick={dismissWelcome}
+          >
+            关闭
+          </button>
+          <p className="mb-2 font-medium text-violet-900 dark:text-violet-100">
+            快速开始（约 3 步）
+          </p>
+          <ol className="list-decimal space-y-1 pl-4 text-xs text-violet-900/90 dark:text-violet-100/90">
+            <li>在上方选择或确认工作区 / 会话（默认 ws-demo / sess-demo）</li>
+            <li>左侧选 chunk 或点「+ 新建 memory_chunk」，在右侧编辑标题与内容</li>
+            <li>
+              再开一浏览器窗口同地址，或终端运行{" "}
+              <code className="rounded bg-violet-100 px-1 dark:bg-violet-900">
+                npm run agent:push
+              </code>
+            </li>
+          </ol>
+        </div>
+      ) : null}
+
       <MemoryScopeBar
         scope={scope}
         nodes={activeNodes}
@@ -160,7 +224,7 @@ export function ScopedMemoryDemo({
             尚无 workspace / session / memory_chunk 节点
           </p>
           <p className="text-xs text-zinc-500">
-            点击下方按钮写入演示图，或等待其他客户端 / Agent 同步数据。
+            连接同步后将自动写入演示数据（每个浏览器会话仅一次）；也可手动点击下方按钮。
           </p>
           <button
             type="button"

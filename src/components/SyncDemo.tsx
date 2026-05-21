@@ -261,8 +261,8 @@ export function SyncDemo() {
             Local-first（CRDT）
           </p>
           <p className="text-sm text-teal-900 dark:text-teal-100">
-            刷新页面后，本 room 的 Memory Graph（workspace / session /
-            memory_chunk）会先从 IndexedDB 恢复，再与服务端 CRDT 合并同步。
+            刷新不丢当前 room 的 Graph 与 memory_chunk：先从 IndexedDB 恢复，再与服务端
+            CRDT 合并同步。
           </p>
           <dl className="grid gap-1 text-xs text-teal-900/90 dark:text-teal-100/90 sm:grid-cols-2">
             <div>
