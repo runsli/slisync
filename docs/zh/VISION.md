@@ -53,7 +53,7 @@
 | 实时传输 | **Socket.IO** | 当前生产路径；WebRTC 为远期选项 |
 | 一致性 | **Yjs / CRDT** | 主路径；可选 LWW + JSON Patch |
 | 服务端持久化 | Node.js、**Redis**（可选）、JSON 文件 | 非 PostgreSQL（可后续扩展） |
-| 本地优先 | 客户端 **CRDT 离线队列** | 已做 reconnect flush；**IndexedDB 尚未接入** |
+| 本地优先 | **IndexedDB** + CRDT 离线 outbox | 浏览器默认持久化 room 快照与队列 — [local-first.md](./local-first.md) |
 
 ---
 

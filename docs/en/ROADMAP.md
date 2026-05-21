@@ -39,7 +39,7 @@ This document maps the **12-phase product vision** in [VISION.md](./VISION.md) t
 
 | Vision | Theme | Status | In this repo |
 |--------|-------|--------|--------------|
-| **7** | Memory Layer | 🟡 | `workspace` / `session` / `memory_chunk` (**P2-7**); demo still has `message`/`counter` |
+| **7** | Memory Layer | ✅ | Demo centered on scoped memory — [demo-scoped-memory.md](./demo-scoped-memory.md) (**P2-7**) |
 | **8** | Memory Graph | ✅ | Yjs `graph/`, `MemoryGraph`, `graphOps`, HTTP traverse — **eng. Phase 7–10** |
 | **9** | Semantic Memory | ⛔ | No embedding / vector / reasoning engine |
 
@@ -71,18 +71,19 @@ Parallel **engineering IDs** (commits / comments):
 ## Suggested reading order
 
 1. Motivation → [VISION.md](./VISION.md)
-2. Aonote export → [export.md](./export.md) (M0–M2)
-3. Run Demo → [README.md](../../README.md)
-4. Protocol & API → [packages/README.md](../../packages/README.md)
-5. Config → [.env.example](../../.env.example)
+2. Scoped memory Demo → [demo-scoped-memory.md](./demo-scoped-memory.md)
+3. Aonote export → [export.md](./export.md) (M0–M2)
+4. Run app → [README.md](../../README.md)
+5. Protocol & API → [packages/README.md](../../packages/README.md)
+6. Config → [.env.example](../../.env.example)
 
 ---
 
 ## Likely next steps (not committed dates)
 
 1. ✅ **Aonote export M0–M2** — [export.md](./export.md)
-2. **Vision 2** — IndexedDB + unified outbox
-3. **Vision 7** — Demo centered on scoped memory
+2. ✅ **Vision 2** — IndexedDB + unified outbox — [local-first.md](./local-first.md)
+3. ✅ **Vision 7** — Demo centered on scoped memory — [demo-scoped-memory.md](./demo-scoped-memory.md)
 4. **Vision 10** — Room-level agent task bus / events
 5. **Vision 4** — Optional PostgreSQL / HTTP export (M4)
 

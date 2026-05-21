@@ -40,7 +40,7 @@
 
 | 愿景 | 主题 | 状态 | 本仓库实现 |
 |------|------|------|------------|
-| **7** | Memory Layer | 🟡 | workspace/session/chunk — **P2-7** |
+| **7** | Memory Layer | ✅ | Demo 以 scoped memory 为主 — [demo-scoped-memory.md](./demo-scoped-memory.md)（**P2-7**） |
 | **8** | Memory Graph | ✅ | Graph + HTTP — **Phase 7–10** |
 | **9** | Semantic Memory | ⛔ | 不做向量 / 推理 |
 
@@ -67,10 +67,11 @@
 ## 建议阅读顺序
 
 1. [VISION.md](./VISION.md)
-2. [export.md](./export.md) — 青笺 Memory Chunk 导出（M0–M2）
-3. [README.zh-CN.md](../../README.zh-CN.md)
-4. [packages/README.zh-CN.md](../../packages/README.zh-CN.md)
-5. [.env.example](../../.env.example)
+2. [demo-scoped-memory.md](./demo-scoped-memory.md) — 5 分钟 Demo 验收
+3. [export.md](./export.md) — 青笺 Memory Chunk 导出（M0–M2）
+4. [README.zh-CN.md](../../README.zh-CN.md)
+5. [packages/README.zh-CN.md](../../packages/README.zh-CN.md)
+6. [.env.example](../../.env.example)
 
 ---
 
@@ -78,7 +79,7 @@
 
 1. ✅ 青笺导出 M0–M2 — 见 [export.md](./export.md)  
 2. ~~IndexedDB + outbox 统一~~（已完成，见 [local-first.md](./local-first.md)）  
-3. Demo 以 scoped memory 为主  
+3. ~~Demo 以 scoped memory 为主~~（已完成，见 [demo-scoped-memory.md](./demo-scoped-memory.md)）  
 4. Agent 任务总线  
 5. 可选 PostgreSQL / HTTP export（M4）  
 

@@ -53,7 +53,7 @@ Without a shared memory space, handoffs are slow and error-prone.
 | Transport | **Socket.IO** | Production path; WebRTC is future |
 | Consistency | **Yjs / CRDT** | Primary; optional LWW + JSON Patch |
 | Server persistence | Node.js, **Redis** (optional), JSON files | PostgreSQL not yet |
-| Local-first | **CRDT offline outbox** | Reconnect flush; **IndexedDB not wired** |
+| Local-first | **IndexedDB** + CRDT offline outbox | Browser persistence for room snapshot + outbox — [local-first.md](./local-first.md) |
 
 ---
 

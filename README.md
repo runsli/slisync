@@ -40,7 +40,7 @@ Details: [docs/en/VISION.md](./docs/en/VISION.md#2-why-it-matters).
 |--------|-------|-----------|
 | 1–3 | Realtime / local-first / patch | ✅ realtime + patch + [IndexedDB local-first](./docs/en/local-first.md) |
 | 4–6 | Persistence / CRDT / SDK | ✅ |
-| 7–8 | Memory layer / graph | 🟡 structured chunks; ✅ graph + HTTP |
+| 7–8 | Memory layer / graph | ✅ [scoped memory Demo](./docs/en/demo-scoped-memory.md); ✅ graph + HTTP |
 | 9 | Semantic search | ⛔ excluded |
 | 10–12 | Multi-agent / workflow / AI OS | 🟡 agent + presence; ⬜ workflow & OS |
 
@@ -60,7 +60,9 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-Demo: **CRDT / LWW** comparison, shared `message`/`counter`, Memory Graph (tree / force-directed), workspace/session/chunk, Presence, offline queue, agent/graph toasts. **Local-first (CRDT):** edits survive page refresh via IndexedDB — see [docs/en/local-first.md](./docs/en/local-first.md).
+**Primary path: scoped memory** — edit `workspace → session → memory_chunk` in a two-column Demo with Presence and Agent hints. Follow [docs/en/demo-scoped-memory.md](./docs/en/demo-scoped-memory.md) for a five-minute checklist. **Local-first (CRDT):** Graph and chunks survive refresh via IndexedDB — [docs/en/local-first.md](./docs/en/local-first.md).
+
+> Legacy `message` / `counter` and LWW comparison live under collapsed **legacy shared fields** and **Advanced: LWW** sections.
 
 Standalone sync server:
 
@@ -182,6 +184,8 @@ slisync/
 | [docs/zh/ROADMAP.md](./docs/zh/ROADMAP.md) | 中文 |
 | [docs/en/export.md](./docs/en/export.md) | English |
 | [docs/zh/export.md](./docs/zh/export.md) | 中文 |
+| [docs/en/demo-scoped-memory.md](./docs/en/demo-scoped-memory.md) | English |
+| [docs/zh/demo-scoped-memory.md](./docs/zh/demo-scoped-memory.md) | 中文 |
 | [packages/README.md](./packages/README.md) | English (technical) |
 | [packages/README.zh-CN.md](./packages/README.zh-CN.md) | 中文（技术） |
 | [docs/README.md](./docs/README.md) | Index |

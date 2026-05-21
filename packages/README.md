@@ -9,6 +9,7 @@ npm workspace **`@slisync/*`** implements **Slisync** (room realtime sync + Memo
 | [docs/en/VISION.md](../docs/en/VISION.md) | Product vision (English) |
 | [docs/zh/VISION.md](../docs/zh/VISION.md) | 产品愿景（中文） |
 | [docs/en/ROADMAP.md](../docs/en/ROADMAP.md) | Roadmap |
+| [docs/en/demo-scoped-memory.md](../docs/en/demo-scoped-memory.md) | Scoped memory Demo walkthrough |
 | [README.md](../README.md) | Quick start |
 
 ---
@@ -73,6 +74,8 @@ npm run sync:server:dev   # watch
 npm run dev
 NEXT_PUBLIC_SYNC_URL=http://localhost:3001 npm run dev
 ```
+
+Scoped memory Demo checklist: [docs/en/demo-scoped-memory.md](../docs/en/demo-scoped-memory.md).
 
 ---
 

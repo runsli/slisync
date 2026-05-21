@@ -8,6 +8,7 @@ npm 工作区 **`@slisync/*`** 实现 **Slisync**（room 实时同步 + Memory G
 |------|------|
 | [docs/zh/VISION.md](../docs/zh/VISION.md) | 产品愿景 |
 | [docs/zh/ROADMAP.md](../docs/zh/ROADMAP.md) | 路线图 |
+| [docs/zh/demo-scoped-memory.md](../docs/zh/demo-scoped-memory.md) | Scoped Memory Demo 验收 |
 | [README.zh-CN.md](../README.zh-CN.md) | 快速开始 |
 
 ---
@@ -41,6 +42,8 @@ npm 工作区 **`@slisync/*`** 实现 **Slisync**（room 实时同步 + Memory G
 npm run sync:server      # :3001
 npm run dev              # :3000 集成 Demo
 ```
+
+主路径验收：[docs/zh/demo-scoped-memory.md](../docs/zh/demo-scoped-memory.md)。
 
 - `GET /health`
 - `GET /v1/sync/capabilities`
