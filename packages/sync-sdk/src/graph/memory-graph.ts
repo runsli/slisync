@@ -1,6 +1,7 @@
 import * as Y from "yjs";
 import {
   edgeIdFor,
+  parseMemoryChunkData,
   type EdgeRelation,
   type LinkOptions,
   type MemoryChunkData,
@@ -94,6 +95,31 @@ export class MemoryGraph {
       data: data as unknown as Record<string, unknown>,
       tags: input.tags ?? ["scope:chunk"],
       createdBy: input.createdBy,
+    });
+  }
+
+  /** Update title and/or content of an existing memory_chunk node. */
+  updateChunkContent(
+    nodeId: string,
+    patch: { title?: string; content?: string },
+  ): MemoryNode {
+    const existing = this.getNode(nodeId);
+    if (!existing || existing.kind !== "memory_chunk") {
+      throw new Error(`updateChunkContent: not a memory_chunk (${nodeId})`);
+    }
+    const chunk = parseMemoryChunkData(existing);
+    if (!chunk) {
+      throw new Error(`updateChunkContent: invalid chunk data (${nodeId})`);
+    }
+    return this.upsertChunk({
+      id: nodeId,
+      workspaceId: chunk.scope.workspaceId,
+      sessionId: chunk.scope.sessionId,
+      title: patch.title ?? existing.title,
+      content: patch.content ?? chunk.content,
+      source: chunk.source,
+      importance: chunk.importance,
+      tags: existing.tags,
     });
   }
 

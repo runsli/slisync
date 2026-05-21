@@ -8,7 +8,7 @@ import {
   useSync,
   type SyncStrategy,
 } from "@slisync/sync-sdk";
-import { MemoryGraphPanel } from "./MemoryGraphPanel";
+import { ScopedMemoryDemo } from "./ScopedMemoryDemo";
 import { SyncStrategyPanel } from "./SyncStrategyPanel";
 import { SYNC_PROTOCOL_VERSION } from "@slisync/sync-sdk";
 
@@ -246,7 +246,7 @@ export function SyncDemo() {
       ) : null}
 
       {strategy === "crdt" && mounted ? (
-        <MemoryGraphPanel
+        <ScopedMemoryDemo
           graphId={ROOM_ID}
           actorId={clientId || "anonymous"}
           syncReady={syncReady}
