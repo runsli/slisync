@@ -9,6 +9,7 @@
 | [en/export.md](./en/export.md) | [zh/export.md](./zh/export.md) |
 | [en/local-first.md](./en/local-first.md) | [zh/local-first.md](./zh/local-first.md) |
 | [en/demo-scoped-memory.md](./en/demo-scoped-memory.md) | [zh/demo-scoped-memory.md](./zh/demo-scoped-memory.md) |
+| [en/task-bus.md](./en/task-bus.md) | [zh/task-bus.md](./zh/task-bus.md) |
 
 | Entry | English | 中文 |
 |-------|---------|------|

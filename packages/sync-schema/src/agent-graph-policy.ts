@@ -21,6 +21,8 @@ export const DEFAULT_AGENT_GRAPH_POLICY: AgentGraphPolicy = {
     "derived_from",
     "references",
     "contains",
+    "depends_on",
+    "assigned_to",
   ],
   allowedNodeKinds: [
     "project",

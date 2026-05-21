@@ -46,6 +46,12 @@ export {
   type MemoryScopeKind,
 } from "./memory-model";
 export {
+  isTaskStatus,
+  parseTaskData,
+  type TaskData,
+  type TaskStatus,
+} from "./task-model";
+export {
   type PresenceJoinPayload,
   type PresenceMember,
   type PresenceStatePayload,
