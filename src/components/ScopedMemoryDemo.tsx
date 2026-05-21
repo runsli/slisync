@@ -1,8 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { filterNodesByScope, useMemoryGraph } from "@slisync/sync-sdk";
-import type { MemoryScope } from "@slisync/sync-schema";
+import {
+  filterNodesByScope,
+  useMemoryGraph,
+  type AgentActivityPayload,
+} from "@slisync/sync-sdk";
+import type { MemoryScope, PresenceMember } from "@slisync/sync-schema";
+import { DemoAgentPushHint } from "./demo-agent-push-hint";
 import { MemoryChunkEditor } from "./MemoryChunkEditor";
 import { MemoryGraphPanel } from "./MemoryGraphPanel";
 import { MemoryScopeBar } from "./MemoryScopeBar";
@@ -25,6 +30,8 @@ export type ScopedMemoryDemoProps = {
   syncReady: boolean;
   getCrdtDocument: () => import("yjs").Doc | null;
   notifyGraphActivity?: (summary: string) => void;
+  presenceMembers?: PresenceMember[];
+  lastAgentActivity?: AgentActivityPayload | null;
 };
 
 /** Primary demo shell: scoped memory graph navigation + chunk editor. */
@@ -34,6 +41,8 @@ export function ScopedMemoryDemo({
   syncReady,
   getCrdtDocument,
   notifyGraphActivity,
+  presenceMembers = [],
+  lastAgentActivity = null,
 }: ScopedMemoryDemoProps) {
   const { graph, snapshot, ready } = useMemoryGraph({
     graphId,
@@ -202,13 +211,29 @@ export function ScopedMemoryDemo({
           <ol className="list-decimal space-y-1 pl-4 text-xs text-violet-900/90 dark:text-violet-100/90">
             <li>在上方选择或确认工作区 / 会话（默认 ws-demo / sess-demo）</li>
             <li>左侧选 chunk 或点「+ 新建 memory_chunk」，在右侧编辑标题与内容</li>
-            <li>
-              再开一浏览器窗口同地址，或终端运行{" "}
-              <code className="rounded bg-violet-100 px-1 dark:bg-violet-900">
-                npm run agent:push
-              </code>
-            </li>
+            <li>再开一浏览器窗口同地址，或复制下方 Agent 命令在终端执行</li>
           </ol>
+          <div className="mt-3">
+            <DemoAgentPushHint scope={scope} compact />
+          </div>
+        </div>
+      ) : null}
+
+      {lastAgentActivity ? (
+        <div
+          role="status"
+          className="rounded-lg border border-violet-300 bg-violet-100/80 px-3 py-2 text-sm text-violet-950 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100"
+        >
+          <span className="font-medium">Agent 写入记忆</span>
+          <span className="mx-1">·</span>
+          <span className="font-medium">{lastAgentActivity.entry.agentId}</span>
+          <span className="mx-1">·</span>
+          {lastAgentActivity.entry.action}: {lastAgentActivity.entry.summary}
+          <p className="mt-1 text-xs opacity-80">
+            当前 scope {scope.workspaceId}
+            {scope.sessionId ? ` / ${scope.sessionId}` : ""} — 若含 graphOps，左侧图与右侧
+            chunk 会随 CRDT 更新；message 历史见底部「旧版共享字段」折叠区。
+          </p>
         </div>
       ) : null}
 
@@ -216,6 +241,8 @@ export function ScopedMemoryDemo({
         scope={scope}
         nodes={activeNodes}
         onScopeChange={setScope}
+        presenceMembers={presenceMembers}
+        syncReady={syncReady}
       />
 
       {isEmpty ? (
@@ -267,6 +294,8 @@ export function ScopedMemoryDemo({
           </div>
         </div>
       )}
+
+      <DemoAgentPushHint scope={scope} />
     </section>
   );
 }

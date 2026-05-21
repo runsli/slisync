@@ -6,12 +6,15 @@ import {
   parseWorkspaceId,
   type MemoryNode,
   type MemoryScope,
+  type PresenceMember,
 } from "@slisync/sync-schema";
 
 export type MemoryScopeBarProps = {
   scope: MemoryScope;
   nodes: MemoryNode[];
   onScopeChange: (scope: MemoryScope) => void;
+  presenceMembers?: PresenceMember[];
+  syncReady?: boolean;
 };
 
 /** Workspace / session picker driven by graph snapshot nodes. */
@@ -19,7 +22,10 @@ export function MemoryScopeBar({
   scope,
   nodes,
   onScopeChange,
+  presenceMembers = [],
+  syncReady = false,
 }: MemoryScopeBarProps) {
+  const onlineCount = presenceMembers.filter((m) => m.status === "online").length;
   const activeNodes = useMemo(
     () => nodes.filter((n) => !n.deletedAt),
     [nodes],
@@ -69,6 +75,34 @@ export function MemoryScopeBar({
 
   return (
     <div className="space-y-2">
+      {syncReady ? (
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="font-medium text-zinc-600 dark:text-zinc-300">
+            本 room 在线 {onlineCount} 人
+          </span>
+          {presenceMembers.length > 0 ? (
+            <span className="flex flex-wrap gap-1.5">
+              {presenceMembers.map((m) => (
+                <span
+                  key={m.clientId}
+                  className="inline-flex items-center gap-1 rounded-full border border-zinc-200 px-2 py-0.5 dark:border-zinc-700"
+                  title={m.actorId}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      m.status === "online" ? "bg-emerald-500" : "bg-zinc-400"
+                    }`}
+                  />
+                  {m.actorId.slice(0, 8)}
+                </span>
+              ))}
+            </span>
+          ) : (
+            <span className="text-zinc-400">（等待 Presence 同步…）</span>
+          )}
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-end gap-3 text-xs">
         <label className="flex flex-col gap-1 text-zinc-500">
           <span>工作区</span>

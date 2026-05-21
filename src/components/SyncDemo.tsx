@@ -177,8 +177,10 @@ export function SyncDemo() {
           role="status"
           className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-900 dark:border-violet-900/50 dark:bg-violet-950/40 dark:text-violet-200"
         >
-          Agent <span className="font-medium">{lastAgentActivity.entry.agentId}</span>{" "}
-          · {lastAgentActivity.entry.action}: {lastAgentActivity.entry.summary}
+          Agent 活动 ·{" "}
+          <span className="font-medium">{lastAgentActivity.entry.agentId}</span> ·{" "}
+          {lastAgentActivity.entry.action}: {lastAgentActivity.entry.summary}
+          <span className="text-xs opacity-75">（详见下方共享记忆区）</span>
         </div>
       ) : null}
 
@@ -187,10 +189,14 @@ export function SyncDemo() {
           role="status"
           className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-200"
         >
-          Graph{" "}
+          记忆图 / chunk 变更 ·{" "}
           <span className="font-medium">{lastGraphActivity.actorId}</span>
-          {lastGraphActivity.source ? ` (${lastGraphActivity.source})` : null}:{" "}
-          {lastGraphActivity.summary}
+          {lastGraphActivity.source === "agent"
+            ? "（Agent）"
+            : lastGraphActivity.source === "human"
+              ? "（用户）"
+              : null}
+          ：{lastGraphActivity.summary}
         </div>
       ) : null}
 
@@ -224,27 +230,6 @@ export function SyncDemo() {
         ) : null}
       </div>
 
-      {strategy === "crdt" && mounted && presenceMembers.length > 0 ? (
-        <section className="flex flex-wrap gap-2 rounded-xl border border-zinc-200 p-3 dark:border-zinc-800">
-          <p className="w-full text-xs font-medium uppercase tracking-wide text-zinc-500">
-            在线成员
-          </p>
-          {presenceMembers.map((m) => (
-            <span
-              key={m.clientId}
-              className="inline-flex items-center gap-1.5 rounded-full border border-zinc-200 px-2.5 py-1 text-xs dark:border-zinc-700"
-            >
-              <span
-                className={`h-1.5 w-1.5 rounded-full ${
-                  m.status === "online" ? "bg-emerald-500" : "bg-zinc-400"
-                }`}
-              />
-              {m.actorId.slice(0, 8)}
-            </span>
-          ))}
-        </section>
-      ) : null}
-
       {strategy === "crdt" && mounted ? (
         <ScopedMemoryDemo
           graphId={ROOM_ID}
@@ -252,6 +237,8 @@ export function SyncDemo() {
           syncReady={syncReady}
           getCrdtDocument={getCrdtDocument}
           notifyGraphActivity={notifyGraphActivity}
+          presenceMembers={presenceMembers}
+          lastAgentActivity={lastAgentActivity}
         />
       ) : null}
 
