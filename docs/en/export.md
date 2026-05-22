@@ -24,7 +24,9 @@ flowchart LR
 | M0 | This doc | Paths and acceptance |
 | M1 | `@slisync/sync-sdk` `export-chunks.ts` | Snapshot / update → in-memory files |
 | M2 | `npm run export:chunks` | Read CRDT JSON (local or fixture), write disk |
-| M3+ | Aonote repo wiring, HTTP export | Not implemented |
+| M3 | HTTP GET | [export-http.md](./export-http.md) (Phase 0 contract; handler in Phase 1) |
+| M4 | Optional PostgreSQL CRDT persistence | [export-http.md](./export-http.md#persistence-design-pre-implementation) |
+| M3+ | Aonote repo wiring | Consume Markdown in the Aonote repo |
 
 ---
 
@@ -144,10 +146,10 @@ Copy into an Aonote project and build. Tests: `tests/unit/export-chunks.test.ts`
 
 ---
 
-## Out of scope (this phase)
+## Out of scope
 
 - Write-back from edited Markdown
-- IndexedDB as export source
-- HTTP export endpoint
+- IndexedDB as HTTP export source
+- HTTP export of `task` and other non-`memory_chunk` nodes
 
-See [ROADMAP.md](./ROADMAP.md) · [VISION.md](./VISION.md).
+HTTP export contract and acceptance chain: [export-http.md](./export-http.md). See [ROADMAP.md](./ROADMAP.md) · [VISION.md](./VISION.md).

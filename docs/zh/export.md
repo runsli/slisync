@@ -24,7 +24,9 @@ flowchart LR
 | M0 | 本文档 | 路径约定与验收步骤 |
 | M1 | `@slisync/sync-sdk` `export-chunks.ts` | 从 snapshot / Yjs update 生成文件描述 |
 | M2 | `npm run export:chunks` | 从 CRDT JSON 读 room 并写盘（本地或 fixture） |
-| M3+ | 青笺仓库对接、HTTP export | 未实现 |
+| M3 | HTTP GET | 见 [export-http.md](./export-http.md)（Phase 0 契约；handler Phase 1） |
+| M4 | 可选 PostgreSQL CRDT 持久化 | 见 [export-http.md](./export-http.md#持久化实现前设计) |
+| M3+ | 青笺仓库对接 | 仓库侧消费 Markdown |
 
 ---
 
@@ -179,10 +181,10 @@ git add fixtures/crdt-rooms.example.json
 
 ---
 
-## 明确不做（本阶段）
+## 明确不做
 
 - Markdown / 青笺编辑结果写回 CRDT
-- IndexedDB local-first 作为导出源
-- HTTP `GET /export/chunks`（见路线图 M4）
+- IndexedDB local-first 作为 HTTP 导出源
+- HTTP 导出 `task` 等非 `memory_chunk` 节点
 
-相关愿景：[ROADMAP.md](./ROADMAP.md) · [VISION.md](./VISION.md)
+HTTP 导出契约与验收链：[export-http.md](./export-http.md)。相关愿景：[ROADMAP.md](./ROADMAP.md) · [VISION.md](./VISION.md)

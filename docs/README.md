@@ -7,6 +7,7 @@
 | [en/VISION.md](./en/VISION.md) | [zh/VISION.md](./zh/VISION.md) |
 | [en/ROADMAP.md](./en/ROADMAP.md) | [zh/ROADMAP.md](./zh/ROADMAP.md) |
 | [en/export.md](./en/export.md) | [zh/export.md](./zh/export.md) |
+| [en/export-http.md](./en/export-http.md) | [zh/export-http.md](./zh/export-http.md) |
 | [en/local-first.md](./en/local-first.md) | [zh/local-first.md](./zh/local-first.md) |
 | [en/demo-scoped-memory.md](./en/demo-scoped-memory.md) | [zh/demo-scoped-memory.md](./zh/demo-scoped-memory.md) |
 | [en/task-bus.md](./en/task-bus.md) | [zh/task-bus.md](./zh/task-bus.md) |

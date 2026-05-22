@@ -20,6 +20,13 @@ export type {
 } from "./auth";
 export type { AuditEntry, AuditSource } from "./audit";
 export type {
+  ExportChunksHttpError,
+  ExportChunksHttpFile,
+  ExportChunksHttpResponse,
+  ExportChunksHttpSuccess,
+  ExportChunksQuery,
+} from "./export-http-model";
+export type {
   GraphActivityPayload,
   GraphActivitySource,
   GraphNotifyPayload,
