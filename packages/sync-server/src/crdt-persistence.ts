@@ -1,6 +1,7 @@
 import { join } from "node:path";
 import Redis from "ioredis";
 import { decodeUpdate, encodeUpdate } from "@slisync/sync-sdk/crdt";
+import { createCrdtPostgresPersistence } from "./crdt-postgres-persistence";
 import { readJsonFile, writeJsonFile } from "./json-file-db";
 
 const REDIS_KEY_PREFIX = "sync:crdt:";
@@ -8,7 +9,7 @@ const REDIS_KEY_PREFIX = "sync:crdt:";
 type CrdtDatabase = Record<string, string>;
 
 export interface CrdtPersistence {
-  readonly backend: "redis" | "file" | "memory";
+  readonly backend: "redis" | "postgres" | "file" | "memory";
   load(roomId: string): Promise<Uint8Array | null>;
   save(roomId: string, update: Uint8Array): Promise<void>;
 }
@@ -67,9 +68,16 @@ export function createCrdtRedisPersistence(url: string): CrdtPersistence {
   };
 }
 
+/**
+ * Pick one CRDT backend (mutually exclusive; never dual-writes):
+ * REDIS_URL → SYNC_CRDT_POSTGRES_URL → SYNC_CRDT_DATA_PATH file.
+ */
 export function createCrdtPersistence(): CrdtPersistence {
   const redisUrl = process.env.REDIS_URL?.trim();
   if (redisUrl) return createCrdtRedisPersistence(redisUrl);
+
+  const postgresUrl = process.env.SYNC_CRDT_POSTGRES_URL?.trim();
+  if (postgresUrl) return createCrdtPostgresPersistence(postgresUrl);
 
   const dataPath =
     process.env.SYNC_CRDT_DATA_PATH?.trim() ||

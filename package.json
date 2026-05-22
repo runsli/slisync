@@ -35,7 +35,10 @@
     "test:cluster": "node --import tsx --test tests/integration/redis-cluster.test.ts",
     "lint": "eslint",
     "redis:up": "docker compose up -d redis",
-    "dev:redis": "REDIS_URL=redis://localhost:6379 npm run dev"
+    "dev:redis": "REDIS_URL=redis://localhost:6379 npm run dev",
+    "postgres:up": "docker compose up -d postgres",
+    "dev:postgres": "SYNC_CRDT_POSTGRES_URL=postgres://slisync:slisync@localhost:5432/slisync npm run dev",
+    "test:postgres": "node --import tsx --test tests/integration/crdt-postgres-persistence.test.ts"
   },
   "dependencies": {
     "@slisync/sync-sdk": "*",

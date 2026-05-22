@@ -150,15 +150,24 @@ Empty graph with an existing room → **200**, `count: 0`, `files: []` (implemen
 
 ---
 
-## Persistence (design, pre-implementation)
+## Persistence
 
-Server CRDT backing store priority for **all** room reads (including HTTP export):
+One backend is active at a time (no dual-write). Priority for **all** room reads (including HTTP export):
 
 1. **`REDIS_URL`** — Redis keys `sync:crdt:{roomId}`
-2. **`SYNC_CRDT_POSTGRES_URL`** — optional PostgreSQL blob store (Phase 1+; not wired in Phase 0)
+2. **`SYNC_CRDT_POSTGRES_URL`** — PostgreSQL table `sync_crdt_rooms` (`packages/sync-server/migrations/001_sync_crdt_rooms.sql`; also auto-created on first connect)
 3. **`SYNC_CRDT_DATA_PATH`** — JSON file (default `.sync-data/crdt-rooms.json`)
 
+```bash
+docker compose up -d postgres
+npm run dev:postgres
+npm run graph:seed
+# restart dev, then HTTP export still returns seeded chunks
+```
+
 HTTP export **always** derives Markdown from `CrdtRoomStore` → memory graph snapshot → `exportMemoryChunksFromSnapshot` (same logic as CLI). There is **no** separate export cache or materialized export table.
+
+**Tests (optional, not in default `npm test`):** set `SYNC_CRDT_POSTGRES_URL` and run `npm run test:postgres`. Use `SKIP_POSTGRES=1` to force skip when the URL is set.
 
 ---
 

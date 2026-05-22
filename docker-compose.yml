@@ -6,5 +6,18 @@ services:
     volumes:
       - sync-redis-data:/data
 
+  # CRDT persistence (optional): npm run postgres:up && npm run dev:postgres
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: slisync
+      POSTGRES_PASSWORD: slisync
+      POSTGRES_DB: slisync
+    volumes:
+      - sync-postgres-data:/var/lib/postgresql/data
+
 volumes:
   sync-redis-data:
+  sync-postgres-data:

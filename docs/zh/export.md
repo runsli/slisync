@@ -25,7 +25,7 @@ flowchart LR
 | M1 | `@slisync/sync-sdk` `export-chunks.ts` | 从 snapshot / Yjs update 生成文件描述 |
 | M2 | `npm run export:chunks` | 从 CRDT JSON 读 room 并写盘（本地或 fixture） |
 | M3 | HTTP GET | 见 [export-http.md](./export-http.md)（Phase 0 契约；handler Phase 1） |
-| M4 | 可选 PostgreSQL CRDT 持久化 | 见 [export-http.md](./export-http.md#持久化实现前设计) |
+| M4 | 可选 PostgreSQL CRDT 持久化 | `SYNC_CRDT_POSTGRES_URL` + `npm run dev:postgres`（见 [export-http.md](./export-http.md#持久化)） |
 | M3+ | 青笺仓库对接 | 仓库侧消费 Markdown |
 
 ---

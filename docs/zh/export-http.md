@@ -150,15 +150,24 @@ npm run export:chunks:http -- --room example-room --out /tmp/http-export
 
 ---
 
-## 持久化（实现前设计）
+## 持久化
 
-**所有** room 读路径（含 HTTP export）的 CRDT 后端优先级：
+同一时间仅启用一种后端（不双写）。**所有** room 读路径（含 HTTP export）优先级：
 
 1. **`REDIS_URL`** — Redis 键 `sync:crdt:{roomId}`
-2. **`SYNC_CRDT_POSTGRES_URL`** — 可选 PostgreSQL blob（Phase 1+；Phase 0 不接入）
+2. **`SYNC_CRDT_POSTGRES_URL`** — PostgreSQL 表 `sync_crdt_rooms`（`packages/sync-server/migrations/001_sync_crdt_rooms.sql`；首次连接也会 `CREATE TABLE IF NOT EXISTS`）
 3. **`SYNC_CRDT_DATA_PATH`** — JSON 文件（默认 `.sync-data/crdt-rooms.json`）
 
+```bash
+docker compose up -d postgres
+npm run dev:postgres
+npm run graph:seed
+# 重启 dev 后 HTTP export 仍可导出已 seed 的 chunk
+```
+
 HTTP export **始终**经 `CrdtRoomStore` → 内存图快照 → `exportMemoryChunksFromSnapshot`（与 CLI 相同逻辑）。**不**维护单独的 export 快照表或物化视图。
+
+**测试（可选，不在默认 `npm test`）：** 设置 `SYNC_CRDT_POSTGRES_URL` 后执行 `npm run test:postgres`；`SKIP_POSTGRES=1` 可在有 URL 时强制跳过。
 
 ---
 

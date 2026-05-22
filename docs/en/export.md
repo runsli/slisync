@@ -25,7 +25,7 @@ flowchart LR
 | M1 | `@slisync/sync-sdk` `export-chunks.ts` | Snapshot / update → in-memory files |
 | M2 | `npm run export:chunks` | Read CRDT JSON (local or fixture), write disk |
 | M3 | HTTP GET | [export-http.md](./export-http.md) (Phase 0 contract; handler in Phase 1) |
-| M4 | Optional PostgreSQL CRDT persistence | [export-http.md](./export-http.md#persistence-design-pre-implementation) |
+| M4 | Optional PostgreSQL CRDT persistence | `SYNC_CRDT_POSTGRES_URL` + `npm run dev:postgres` ([export-http.md](./export-http.md#persistence)) |
 | M3+ | Aonote repo wiring | Consume Markdown in the Aonote repo |
 
 ---
