@@ -1,12 +1,16 @@
-# Slisync 文档（中文）
+# 中文文档
 
-[English](../en/README.md)（默认）
+[English](../en/README.md) · [文档总索引](../README.md)
 
-| 文档 | 说明 |
-|------|------|
-| [VISION.md](./VISION.md) | Slisync 产品愿景、Aonote 生态、原则 |
-| [ROADMAP.md](./ROADMAP.md) | 12 阶段愿景 × 实现状态 |
-| [export.md](./export.md) | 青笺 Markdown 导出（CLI/SDK） |
-| [export-http.md](./export-http.md) | HTTP 导出契约与持久化设计 |
+## 快速链接
 
-另见 [README.zh-CN.md](../../README.zh-CN.md)、[packages/README.zh-CN.md](../../packages/README.zh-CN.md)。
+- [分层记忆 Demo](./demo-scoped-memory.md)
+- [导出 Markdown](./export.md)
+- [HTTP 导出](./export-http.md)
+- [共忆 → Markdown → 静态站](./story-pipeline.md)
+- [离线优先](./local-first.md)
+- [任务看板](./task-bus.md)
+- [路线图](./ROADMAP.md)
+- [愿景](./VISION.md)
+
+产品说明官网：[slisync-docs](https://github.com/runsli/slisync-docs)

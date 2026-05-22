@@ -4,7 +4,7 @@
 
 This guide covers the **primary Slisync reference Demo path**: edit `workspace → session → memory_chunk` in one room with Presence, Agent CLI, and local-first persistence. Legacy `message` / `counter` fields are collapsed for comparison only.
 
-See also: [local-first.md](./local-first.md) · [export.md](./export.md) · [task-bus.md](./task-bus.md) (collaboration tasks) · [ROADMAP.md](./ROADMAP.md)
+See also: [local-first.md](./local-first.md) · [export.md](./export.md) · [story-pipeline.md](./story-pipeline.md) · [task-bus.md](./task-bus.md) · [ROADMAP.md](./ROADMAP.md)
 
 ---
 
@@ -43,7 +43,7 @@ flowchart TB
 - Terminal 1:
 
 ```bash
-cd /path/to/infra
+cd /path/to/slisync
 nvm use 20
 npm install
 npm run dev

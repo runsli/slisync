@@ -29,9 +29,9 @@ export function DemoAgentPushHint({ scope, compact = false }: Props) {
   if (compact) {
     return (
       <p className="text-xs text-zinc-500">
-        Agent CLI（workspace/session 与 Demo 一致，同{" "}
+        让终端里的 Agent 写入同一份记忆（与{" "}
         <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">graph:seed</code>
-        ）：
+        同一项目/会话）：
         <button
           type="button"
           onClick={() => void handleCopy()}
@@ -46,16 +46,17 @@ export function DemoAgentPushHint({ scope, compact = false }: Props) {
   return (
     <div className="rounded-lg border border-violet-200/80 bg-violet-50/50 p-3 text-xs dark:border-violet-900/50 dark:bg-violet-950/30">
       <p className="mb-1.5 text-violet-900 dark:text-violet-100">
-        终端模拟 Agent 写入（scope:{" "}
-        <span className="font-medium">{scope.workspaceId}</span>
+        在终端运行下面命令，模拟另一个 Agent 往当前项目记忆里追加内容（与{" "}
+        <code className="rounded bg-violet-100/80 px-1 dark:bg-violet-900">graph:seed</code>{" "}
+        使用同一工作区
+        <span className="font-medium"> {scope.workspaceId}</span>
         {scope.sessionId ? (
           <>
             {" "}
-            / <span className="font-medium">{scope.sessionId}</span>
+            / 会话 <span className="font-medium">{scope.sessionId}</span>
           </>
         ) : null}
-        ，与 <code className="rounded bg-violet-100/80 px-1 dark:bg-violet-900">npm run graph:seed</code>{" "}
-        一致）
+        ）
       </p>
       <div className="flex flex-wrap items-center gap-2">
         <code className="break-all rounded bg-white/80 px-2 py-1 font-mono text-[11px] text-violet-900 dark:bg-zinc-900 dark:text-violet-100">

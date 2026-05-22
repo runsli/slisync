@@ -78,7 +78,7 @@ export function MemoryScopeBar({
       {syncReady ? (
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="font-medium text-zinc-600 dark:text-zinc-300">
-            本 room 在线 {onlineCount} 人
+            当前协作空间 · {onlineCount} 人在线
           </span>
           {presenceMembers.length > 0 ? (
             <span className="flex flex-wrap gap-1.5">
@@ -98,7 +98,7 @@ export function MemoryScopeBar({
               ))}
             </span>
           ) : (
-            <span className="text-zinc-400">（等待 Presence 同步…）</span>
+            <span className="text-zinc-400">（正在同步在线成员…）</span>
           )}
         </div>
       ) : null}
@@ -135,7 +135,7 @@ export function MemoryScopeBar({
               })
             }
           >
-            <option value="">（未指定 session）</option>
+            <option value="">（不选具体会话）</option>
             {sessionOptions.map((opt) => (
               <option key={opt.sessionId} value={opt.sessionId}>
                 {opt.label}

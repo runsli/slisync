@@ -1,60 +1,39 @@
-# Aonote export (Memory Chunk → Markdown)
+# Export Markdown
 
 [中文](../zh/export.md)
 
-Slisync exports **`memory_chunk`** nodes from a room’s Memory Graph as Markdown with YAML front matter, for static site builders such as [Aonote](https://aonote.vercel.app).
+Export **`memory_chunk`** nodes in a room to **Markdown files** with YAML front matter. Slisync does not ship a blog engine — you point the output at any static site, CMS, or note tool you already use.
 
-**v1**: one-way snapshot export only — **no** Markdown → CRDT round-trip.
-
----
+**v1 is a one-way snapshot** — no Markdown → CRDT write-back.
 
 ## Data flow
 
 ```mermaid
 flowchart LR
-  A[Y.Doc / CRDT room] --> B[readMemoryGraphSnapshot]
-  B --> C[filter memory_chunk]
-  C --> D["markdown/chunks/{ws}/{session}/{slug}.md"]
-  D --> E[Aonote build]
-  E --> F[Static site]
+  CRDT[Y.Doc room] --> Snap[readMemoryGraphSnapshot]
+  Snap --> Filter[memory_chunk only]
+  Filter --> MD["markdown/chunks/ws/sess/slug.md"]
+  MD --> YOU[Your publisher]
+  YOU --> Site[Static site / blog / notes]
 ```
 
-| Milestone | Location | Role |
-|-----------|----------|------|
-| M0 | This doc | Paths and acceptance |
-| M1 | `@slisync/sync-sdk` `export-chunks.ts` | Snapshot / update → in-memory files |
-| M2 | `npm run export:chunks` | Read CRDT JSON (local or fixture), write disk |
-| M3 | HTTP GET | ✅ [export-http.md](./export-http.md) · `npm run export:chunks:http` |
-| M4 | Optional PostgreSQL CRDT persistence | ✅ `SYNC_CRDT_POSTGRES_URL` + `npm run dev:postgres` ([export-http.md](./export-http.md#persistence)) |
-| M3+ | Aonote repo wiring | Consume Markdown in the Aonote repo |
+## Directory layout
 
----
-
-## Layout (Aonote-aligned)
-
-Default output root: `markdown/chunks/` (override with `--out`).
-
-```
+```text
 markdown/chunks/
   {workspaceId}/
-    {sessionId}/
+    {sessionId}/          # _unsessioned when no session
       {slug}.md
 ```
 
-- `workspaceId` / `sessionId` come from `data.scope` on the chunk.
-- Missing `sessionId` → `_unsessioned`.
-- `slug` from node `title`; non-Latin titles fall back to a `nodeId` prefix.
+`slug` is derived from `title`; titles with no Latin letters fall back to a `nodeId` prefix.
 
----
-
-## File format
-
-YAML front matter + body (`content`):
+## Markdown example
 
 ```yaml
 ---
-title: "User asked about CRDT sync"
-date: "2026-05-20T12:00:00.000Z"
+title: "Product goal: Demo centers on Memory Graph"
+date: "2026-05-22T12:00:00.000Z"
 workspaceId: ws-demo
 sessionId: sess-demo
 nodeId: node_xxx
@@ -65,93 +44,62 @@ importance: 0.9
 tags: [scope:chunk]
 ---
 
-Explain Yjs merge vs LWW optimistic locking for shared memory.
+Body content…
 ```
 
----
+Extra front matter fields are safe for most generators; consumers that only need `title` and `date` can ignore the rest.
 
-## SDK (M1)
+## Three export paths
 
-```ts
-import {
-  exportMemoryChunksFromSnapshot,
-  exportMemoryChunksFromCrdtUpdate,
-  exportMemoryChunksFromCrdtFile,
-} from "@slisync/sync-sdk/graph";
+| Path | Command | Data source |
+|------|---------|-------------|
+| **Live HTTP** | `npm run export:chunks:http` | Running sync (dev + seed first) |
+| **Local file** | `npm run export:chunks` | `.sync-data/crdt-rooms.json` |
+| **CI / fixture** | `npm run export:chunks:ci` | `fixtures/crdt-rooms.example.json` |
 
-const files = exportMemoryChunksFromSnapshot(snapshot, { roomId: "my-room" });
-const fromUpdate = exportMemoryChunksFromCrdtUpdate(update, { roomId: "my-room" });
-const fromDisk = await exportMemoryChunksFromCrdtFile(
-  ".sync-data/crdt-rooms.json",
-  "example-room",
-);
-```
-
-Each `ExportedChunkFile` has `relativePath` and full `markdown`; callers write to disk.
-
----
-
-## CLI (M2)
-
-### CRDT data source (auto-resolve)
-
-Without `SYNC_CRDT_DATA_PATH`:
-
-| Condition | File used |
-|-----------|-----------|
-| `SYNC_CRDT_DATA_PATH` set | That path |
-| `CI` or `GITHUB_ACTIONS` (fixture exists) | `fixtures/crdt-rooms.example.json` |
-| `.sync-data/crdt-rooms.json` exists | Local dev/seed persistence |
-| Otherwise | `fixtures/crdt-rooms.example.json` |
-
-Committed **`fixtures/crdt-rooms.example.json`** holds only `example-room` (~6KB) for reproducible export without a running server.
-
-| Env | Default |
-|-----|---------|
-| `SYNC_CRDT_DATA_PATH` | (auto-resolve above) |
-| `SYNC_ROOM` | `example-room` if `--room` omitted |
-
-**Path A — live room:**
+### Live loop (recommended demo)
 
 ```bash
 npm run dev
 npm run graph:seed
-npm run export:chunks -- --room example-room --out ./markdown/chunks
+npm run export:chunks:http -- --room example-room --out ./markdown/chunks
 ```
 
-**Path B — fixture (CI / fresh clone):**
+Demo UI: **Export Markdown drafts (zip)** downloads via HTTP (`Accept: application/zip`).
 
-```bash
-npm run export:chunks:ci -- --out ./markdown/chunks
+### Filters
+
+Environment variables or CLI flags:
+
+- `SYNC_EXPORT_WORKSPACE` / `--workspace`
+- `SYNC_EXPORT_SESSION` / `--session`
+- `SYNC_EXPORT_MIN_IMPORTANCE` / `--min-importance`
+
+## SDK
+
+```ts
+import {
+  exportMemoryChunksFromSnapshot,
+  exportMemoryChunksFromCrdtFile,
+} from "@slisync/sync-sdk/graph";
+
+const files = exportMemoryChunksFromSnapshot(snapshot, {
+  roomId: "example-room",
+  workspaceId: "ws-demo",
+  minImportance: 0.5,
+});
+// files[].relativePath, files[].markdown
 ```
 
-**Refresh fixture** after changing demo graph ops:
+HTTP client: [HTTP export API](./export-http.md).
 
-```bash
-npm run dev && npm run graph:seed
-npm run fixtures:refresh
-```
+## Explicitly not exported
 
-Filters: `SYNC_EXPORT_WORKSPACE`, `SYNC_EXPORT_SESSION`, `SYNC_EXPORT_MIN_IMPORTANCE`.
+- `task` and other non-`memory_chunk` nodes  
+- Edits that exist only in browser IndexedDB and were **not** synced to the server  
 
----
+## Related
 
-## Acceptance
+[HTTP export API](./export-http.md) · [Memory → Markdown → site](./story-pipeline.md)
 
-**Local (file):** `graph:seed` → `export:chunks` → ≥2 `.md` under `markdown/chunks/`.
-
-**Local (HTTP):** `npm run dev` + `graph:seed` → `npm run export:chunks:http -- --room example-room --out ./markdown/chunks` (or curl / `fetchExportChunksHttp` per [export-http.md](./export-http.md)). Compare with file export when using the same persistence.
-
-**CI:** `npm run export:chunks:ci` uses the fixture; the `CI` GitHub workflow runs the same step.
-
-Copy into an Aonote project and build. Tests: `tests/unit/export-chunks.test.ts`. Generated `markdown/chunks/` is gitignored.
-
----
-
-## Out of scope
-
-- Write-back from edited Markdown
-- IndexedDB as HTTP export source
-- HTTP export of `task` and other non-`memory_chunk` nodes
-
-HTTP export contract and acceptance chain: [export-http.md](./export-http.md). See [ROADMAP.md](./ROADMAP.md) · [VISION.md](./VISION.md).
+**Product docs (website)**: sibling [slisync-docs](https://github.com/runsli/slisync-docs) repo.

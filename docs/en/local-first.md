@@ -1,186 +1,54 @@
-# Local-first (Vision 2)
+# Local-first
 
 [中文](../zh/local-first.md)
 
-Slisync is adding **client-side persistence** so CRDT room state and pending updates survive page refresh and brief offline edits. Server-side CRDT remains the merge authority after reconnect.
+The browser persists each CRDT **room** in **IndexedDB**: after refresh or brief offline edits, the client restores the local `Y.Doc` and outbound queue, then merges with server CRDT when online. **The server remains merge authority.**
 
----
-
-## Goal
-
-| Theme | Target |
-|-------|--------|
-| Vision 2 | Local-first: IndexedDB, offline queue, replay on connect |
-| Engineering | Extends **P2-9** (CRDT outbox + reconnect flush) with durable storage |
-
-Enabled by default in the browser: after refresh or offline edits, the client hydrates `Y.Doc` and the outbox from IndexedDB, then merges with the server on reconnect.
-
----
-
-## Architecture (Phase 3–5)
+## Architecture
 
 ```mermaid
 flowchart TB
-  subgraph browser [Browser Demo / useSync]
-    UI[SyncDemo]
-    Client[CrdtSyncClient]
-    IDB[(IndexedDB slisync.rooms)]
-    Outbox[PersistentCrdtOutbox]
-  end
-  subgraph server [Sync Server]
-    Room[CrdtRoomStore]
-  end
+  UI[Demo / useSync]
+  Client[CrdtSyncClient]
+  IDB[(IndexedDB slisync.rooms)]
+  Outbox[PersistentCrdtOutbox]
+  Server[CrdtRoomStore]
   UI --> Client
   Client --> IDB
   Client --> Outbox
   Outbox --> IDB
-  Client -->|CRDT_JOIN / CRDT_UPDATE| Room
-  Room --> Client
+  Client -->|CRDT join/update| Server
 ```
 
----
+## `useSync` fields
 
-## `RoomLocalRecord` (schema v1)
-
-Stored per `roomId` in IndexedDB object store `rooms` (database `slisync`, version `1` — implemented in Phase 1).
-
-| Field | Type | Meaning |
-|-------|------|---------|
-| `schemaVersion` | `1` | Migration hook |
-| `roomId` | string | Room key |
-| `strategy` | `"crdt"` | LWW not persisted in v1 |
-| `docSnapshot` | string (base64) | `Y.encodeStateAsUpdate(doc)` |
-| `outbox` | `string[]` | FIFO base64 incremental updates pending upload |
-| `clientId` | `string \| null` | Stable client id across sessions |
-| `lastSyncedAt` | `number \| null` | Last successful server sync (Unix ms) |
-| `updatedAt` | `number` | Last local write (Unix ms) |
-
-Types: `@slisync/sync-sdk` — `RoomLocalRecord`, `isRoomLocalRecord`, `LocalRoomStore`, `CrdtOutbox`.
-
----
-
-## IndexedDB schema (Phase 1)
-
-| Item | Value |
-|------|--------|
-| Database | `slisync` |
-| Version | `1` |
-| Object store | `rooms` |
-| Key path | `roomId` |
-| Value | `RoomLocalRecord` (structured clone) |
-
-### `LocalRoomStore` API
-
-| Method | Behavior |
-|--------|----------|
-| `get(roomId)` | Returns record or `null` if missing or invalid schema |
-| `put(record)` | Validates record, sets `updatedAt` to now, upserts |
-| `delete(roomId)` | Removes record |
-| `listRoomIds()` | All keys in `rooms` |
-
-Factory functions:
-
-- `createIndexedDBRoomStore()` — browser; throws if IndexedDB unavailable
-- `createNoopLocalRoomStore()` — in-memory `Map` for Node tests and `localPersistence: false`
-- `isIndexedDBAvailable()` — feature detect
-
-Quota: `put` may throw `LocalRoomQuotaExceededError` when storage is full.
-
-### Outbox API (Phase 2)
-
-| Export | Role |
-|--------|------|
-| `InMemoryCrdtOutbox` | FIFO queue in memory |
-| `CrdtUpdateOutbox` | Alias of `InMemoryCrdtOutbox` (back-compat) |
-| `PersistentCrdtOutbox` | Memory queue + debounced `outbox` field on `LocalRoomStore` |
-| `createCrdtOutbox({ roomId, persistence })` | `false` → memory; `true` → IDB or noop; or inject `LocalRoomStore` |
-| `clearLocalRoom(roomId)` | Delete persisted record for a room |
-| `useSync({ localPersistence })` | Passed to `CrdtSyncClient` (default: browser on) |
-
-### Client lifecycle (Phase 3)
-
-1. `connect()` → load `RoomLocalRecord` → apply `docSnapshot` → hydrate `outbox` → Socket `CRDT_JOIN`
-2. Local edits → debounced `docSnapshot` + outbox enqueue while not synced
-3. `markSynced` → flush outbox → `lastSyncedAt` + clear persisted outbox
-4. `disconnect()` → persist snapshot (does **not** clear outbox in memory store)
-
----
-
-## IndexedDB decision
-
-**Phase 0–1:** use the native `indexedDB` API (no new dependency).  
-Re-evaluate the [`idb`](https://github.com/jakearchibald/idb) wrapper only if upgrade/migration code becomes unwieldy.
-
-**Phase 0:** types + `LocalRoomStore` + in-memory `createNoopLocalRoomStore()` only — no `CrdtSyncClient` change.
-
-**Phase 1:** `createIndexedDBRoomStore()` + unit tests (`fake-indexeddb` devDependency).
-
----
-
-## Phase plan
-
-| Phase | Deliverable |
-|-------|-------------|
-| **0** ✅ | `RoomLocalRecord`, `LocalRoomStore`, `CrdtOutbox` types, docs |
-| **1** ✅ | `createIndexedDBRoomStore()`, `tests/unit/indexeddb-room-store.test.ts` |
-| **2** ✅ | `PersistentCrdtOutbox`, `createCrdtOutbox()`, `InMemoryCrdtOutbox` |
-| **3** ✅ | `CrdtSyncClient` hydrate + snapshot persist; `useSync({ localPersistence })` |
-| **4** ✅ | Integration tests (IndexedDB refresh / outbox flush) |
-| **5** ✅ | Demo local-first panel + clear cache; ROADMAP Vision 2 ✅ |
-
-**Follow-up:** export chunks from local store; multi-tab coordination.
-
----
-
-## Manual verification (Demo)
-
-1. Run `npm run dev`, open [http://localhost:3000](http://localhost:3000), select **CRDT**.
-2. Edit **Message** or add a Memory Graph chunk; wait for `connected` and a **last sync** timestamp.
-3. DevTools → **Network** → **Offline**, edit Message again.
-4. **Hard refresh** the page.
-5. Go back online: edits remain; outbox returns to `0`; a second browser window sees merged state.
-6. Click **清除本 room 本地缓存** (clear local cache), refresh — local status should show **无本地数据** (no local data).
-
----
-
-## Troubleshooting
-
-| Symptom | Action |
-|---------|--------|
-| `QuotaExceededError` | Storage full; use Demo **clear local cache** or delete IndexedDB database `slisync` in DevTools |
-| Default message after refresh | Ensure CRDT strategy; cache was cleared; incognito has no prior data |
-| Outbox never drains | Check sync endpoint; read the connection error banner |
-| Differs from server | Server CRDT is merge authority; pending outbox flushes after `syncReady` |
-
----
-
-## Tests (Phase 4)
-
-Requires **Node ≥ 20.9**.
-
-```bash
-npm test
-
-npx tsx --test tests/integration/crdt-indexeddb-persistence.test.ts
+```ts
+const {
+  patchData,
+  outboxSize,
+  localRestored,
+  lastSyncedAt,
+} = useSync({
+  roomId: "example-room",
+  defaultState: { message: "Hello", counter: 0 },
+  strategy: "crdt",
+  localPersistence: true,
+});
 ```
 
-| File | Coverage |
-|------|----------|
-| `tests/unit/indexeddb-room-store.test.ts` | IDB CRUD, invalid schema |
-| `tests/unit/persistent-crdt-outbox.test.ts` | debounced outbox persist, drain |
-| `tests/unit/merge-local-remote.test.ts` | `applyServerSnapshotToDoc` |
-| `tests/integration/crdt-local-persistence.test.ts` | noop store hydrate, reopen |
-| `tests/integration/crdt-indexeddb-persistence.test.ts` | **A** IDB-seeded outbox → new instance flush → reader; **B** empty IDB outbox after flush |
+| Field | Meaning |
+|-------|---------|
+| `localPersistence` | Use IndexedDB |
+| `localRestored` | `null` before hydrate; `true` if local snapshot applied |
+| `lastSyncedAt` | Last successful server sync (Unix ms) |
+| `outboxSize` | Pending upload queue length |
 
-Integration tests use devDependency `fake-indexeddb` (`import "fake-indexeddb/auto"`).  
-`npm run test:cluster` does not require IndexedDB.
+Clear local: `clearLocalRoom(roomId)`.
 
-CI runs `npm test` in `.github/workflows/ci.yml` (`--test-concurrency=1` avoids fake-indexeddb races).
+## Export relationship
 
----
+::: warning
+**export:chunks** reads **server** CRDT persistence, not IndexedDB. Local-only edits **will not** appear in export.
+:::
 
-## Related
-
-- [ROADMAP.md](./ROADMAP.md) — Vision 2 status
-- [VISION.md](./VISION.md) — product principles
-- [packages/README.md](../../packages/README.md) — SDK API
+See [Export Markdown](./export.md).

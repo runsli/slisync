@@ -126,7 +126,7 @@ export function TaskBoardPanel({
 
   if (!syncReady) {
     return (
-      <p className="text-sm text-zinc-500">等待 CRDT 同步完成后可查看与编辑任务…</p>
+      <p className="text-sm text-zinc-500">正在同步任务，请稍候…</p>
     );
   }
 
@@ -138,14 +138,14 @@ export function TaskBoardPanel({
     return (
       <div className="space-y-3 rounded-lg border border-dashed border-amber-300/80 bg-amber-50/40 p-6 text-center dark:border-amber-900/50 dark:bg-amber-950/20">
         <p className="text-sm text-amber-950/90 dark:text-amber-100/90">
-          当前 scope 下尚无任务节点
+          当前项目下还没有任务
         </p>
         <p className="text-xs text-amber-900/80 dark:text-amber-200/80">
-          终端执行{" "}
+          在终端运行{" "}
           <code className="rounded bg-white/80 px-1 font-mono dark:bg-zinc-900">
             npm run task:seed
           </code>{" "}
-          写入演示任务（需已运行 <code className="font-mono">npm run dev</code>）
+          可填入演示待办（需已运行 <code className="font-mono">npm run dev</code>）
         </p>
       </div>
     );
@@ -158,7 +158,7 @@ export function TaskBoardPanel({
           role="status"
           className="rounded-lg border border-amber-400/80 bg-amber-100/90 px-3 py-2 text-sm text-amber-950 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-50"
         >
-          <span className="font-medium">Agent / 图任务活动</span>
+          <span className="font-medium">任务有更新</span>
           {lastAgentActivity && isTaskRelatedAgentActivity(lastAgentActivity) ? (
             <p className="mt-1 text-xs opacity-90">
               {lastAgentActivity.entry.agentId} · {lastAgentActivity.entry.action}:{" "}
@@ -174,7 +174,7 @@ export function TaskBoardPanel({
             </p>
           ) : null}
           <p className="mt-1 text-xs opacity-75">
-            下方看板会随 CRDT 自动刷新；若未定位到具体卡片，请根据摘要手动选择任务。
+            看板会自动刷新；若未高亮对应卡片，请根据上方摘要手动点选任务。
           </p>
         </div>
       ) : null}
@@ -321,7 +321,7 @@ export function TaskBoardPanel({
               ) : null}
             </dl>
             <p className="text-xs text-zinc-500">
-              修改状态会通过 CRDT 同步到其他窗口；Agent 可用{" "}
+              改状态会同步到其它窗口；Agent 也可用{" "}
               <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">
                 npm run agent:push -- --task-title &quot;…&quot; --status in_progress
               </code>

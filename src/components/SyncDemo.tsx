@@ -174,11 +174,11 @@ export function SyncDemo() {
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-8">
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">
-          Slisync · 共享记忆 Demo
+          Slisync 演示 · 多人共用的项目记忆
         </h1>
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          workspace → session → memory_chunk · 多窗口与 Agent 在同一 room
-          内实时共编结构化记忆
+          像共享文档一样，在浏览器里与 AI Agent 一起写记忆、跟任务；改动能实时同步，也可导出成
+          Markdown 文章草稿。
         </p>
       </header>
 
@@ -187,10 +187,11 @@ export function SyncDemo() {
           role="alert"
           className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200"
         >
-          连接失败: {connectionError}
+          暂时连不上同步服务：{connectionError}
           <br />
           <span className="text-xs opacity-80">
-            端点: {syncEndpoint || "—"} · 请用终端打印的 LAN 地址打开页面
+            请确认已运行 <code className="font-mono">npm run dev</code>
+            ，并用终端里显示的地址打开本页（当前端点：{syncEndpoint || "—"}）
           </span>
         </div>
       ) : null}
@@ -292,11 +293,10 @@ export function SyncDemo() {
       {strategy === "crdt" && mounted ? (
         <section className="space-y-3 rounded-xl border border-teal-200 bg-teal-50/50 p-4 dark:border-teal-900/50 dark:bg-teal-950/30">
           <p className="text-xs font-medium uppercase tracking-wide text-teal-800 dark:text-teal-200">
-            Local-first（CRDT）
+            断网 / 刷新仍保留
           </p>
           <p className="text-sm text-teal-900 dark:text-teal-100">
-            刷新不丢当前 room 的 Graph 与 memory_chunk：先从 IndexedDB 恢复，再与服务端
-            CRDT 合并同步。
+            本协作空间里的记忆与任务会先保存在浏览器，恢复网络后再与服务器合并，避免改一半就丢。
           </p>
           <dl className="grid gap-1 text-xs text-teal-900/90 dark:text-teal-100/90 sm:grid-cols-2">
             <div>
@@ -317,7 +317,7 @@ export function SyncDemo() {
             className="rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-sm text-teal-900 hover:bg-teal-50 dark:border-teal-800 dark:bg-teal-950 dark:text-teal-100 dark:hover:bg-teal-900"
             onClick={() => void handleClearLocalCache()}
           >
-            清除本 room 本地缓存
+            清除本协作空间的本地缓存
           </button>
           {localCacheNotice ? (
             <p className="text-xs text-teal-800 dark:text-teal-200" role="status">

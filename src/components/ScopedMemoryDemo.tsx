@@ -232,14 +232,14 @@ export function ScopedMemoryDemo({
       if (result.blob.byteLength < 4) {
         setExportToast({
           kind: "error",
-          text: "当前 scope 下没有可导出的 memory_chunk，请先初始化演示数据或运行 npm run graph:seed",
+          text: "当前工作区还没有可导出的记忆片段。请先点「初始化演示工作区」，或运行 npm run graph:seed",
         });
         return;
       }
       downloadZipBlob(result.blob, result.filename);
       setExportToast({
         kind: "ok",
-        text: `已下载 ${result.filename}（zip，含当前 scope 下全部 memory_chunk）`,
+        text: `已下载 ${result.filename}，可将 zip 内 Markdown 用于建站或发布`,
       });
     } catch (err) {
       setExportToast({
@@ -255,10 +255,10 @@ export function ScopedMemoryDemo({
     <section className="space-y-4 rounded-xl border border-violet-200/80 bg-violet-50/30 p-4 dark:border-violet-900/40 dark:bg-violet-950/20">
       <div className="space-y-1">
         <p className="text-xs font-medium uppercase tracking-wide text-violet-800 dark:text-violet-200">
-          共享记忆 · Scoped Memory
+          共享记忆
         </p>
         <p className="text-sm text-violet-900/90 dark:text-violet-100/90">
-          在同一 room 内按 workspace / session 组织 memory_chunk，左侧导航、右侧编辑。
+          左侧选项目与会话，右侧写记忆片段；其它窗口或终端里的 Agent 写入会实时出现在这里。
         </p>
       </div>
 
@@ -277,13 +277,13 @@ export function ScopedMemoryDemo({
             关闭
           </button>
           <p className="mb-2 font-medium text-violet-900 dark:text-violet-100">
-            快速开始（约 3 步）
+            3 分钟上手
           </p>
           <ol className="list-decimal space-y-1 pl-4 text-xs text-violet-900/90 dark:text-violet-100/90">
-            <li>在上方选择或确认工作区 / 会话（默认 ws-demo / sess-demo）</li>
-            <li>左侧选 chunk 或点「+ 新建 memory_chunk」，在右侧编辑标题与内容</li>
-            <li>再开一浏览器窗口同地址，或复制下方 Agent 命令在终端执行</li>
-            <li>切换「任务看板」Tab 查看 Agent 任务进度（可先运行 npm run task:seed）</li>
+            <li>确认上方「工作区 / 会话」（演示默认为演示项目 / 演示会话）</li>
+            <li>左侧点一条记忆或「新建记忆片段」，在右侧写标题与正文</li>
+            <li>再开一个浏览器窗口访问同一地址，看两边是否同步；或复制下方命令让 Agent 代写</li>
+            <li>切到「任务看板」查看待办与进度（可先运行 npm run task:seed）</li>
           </ol>
           <div className="mt-3">
             <DemoAgentPushHint scope={scope} compact />
@@ -329,15 +329,13 @@ export function ScopedMemoryDemo({
           role="status"
           className="rounded-lg border border-violet-300 bg-violet-100/80 px-3 py-2 text-sm text-violet-950 dark:border-violet-800 dark:bg-violet-950/60 dark:text-violet-100"
         >
-          <span className="font-medium">Agent 写入记忆</span>
+          <span className="font-medium">有 Agent 刚更新了记忆</span>
           <span className="mx-1">·</span>
           <span className="font-medium">{lastAgentActivity.entry.agentId}</span>
           <span className="mx-1">·</span>
           {lastAgentActivity.entry.action}: {lastAgentActivity.entry.summary}
           <p className="mt-1 text-xs opacity-80">
-            当前 scope {scope.workspaceId}
-            {scope.sessionId ? ` / ${scope.sessionId}` : ""} — 若含 graphOps，左侧图与右侧
-            chunk 会随 CRDT 更新。任务相关活动请切换到「任务看板」Tab。
+            左侧列表与右侧编辑器会自动刷新。若是任务相关动态，请打开「任务看板」查看。
           </p>
         </div>
       ) : null}
@@ -358,10 +356,10 @@ export function ScopedMemoryDemo({
             onClick={() => void exportMarkdownHttp()}
             className="rounded-lg border border-violet-300 bg-white px-3 py-1.5 text-sm font-medium text-violet-900 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-100 dark:hover:bg-violet-900/50"
           >
-            {exportBusy ? "导出中…" : "导出 Markdown（HTTP）"}
+            {exportBusy ? "打包中…" : "导出为 Markdown 草稿（zip）"}
           </button>
           <span className="text-xs text-violet-800/70 dark:text-violet-200/70">
-            room={graphId} · Accept: application/zip
+            仅导出当前工作区下的记忆片段，可用于青笺 / 静态博客
           </span>
         </div>
       ) : null}
@@ -390,10 +388,10 @@ export function ScopedMemoryDemo({
         isEmpty ? (
           <div className="space-y-3 rounded-lg border border-dashed border-zinc-300 bg-white/60 p-6 text-center dark:border-zinc-700 dark:bg-zinc-900/30">
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              尚无 workspace / session / memory_chunk 节点
+              还没有演示用的项目记忆
             </p>
             <p className="text-xs text-zinc-500">
-              连接同步后将自动写入演示数据（每个浏览器会话仅一次）；也可手动点击下方按钮。
+              连上同步后会自动填入示例（每个浏览器标签页仅一次）；也可点击下方按钮立即创建。
             </p>
             <button
               type="button"
@@ -456,14 +454,15 @@ export function ScopedMemoryDemo({
       <div className="space-y-2">
         <DemoAgentPushHint scope={scope} />
         <p className="text-xs text-violet-800/80 dark:text-violet-200/80">
-          任务演示：终端运行{" "}
+          想体验任务同步：终端运行{" "}
           <code className="rounded bg-violet-100/80 px-1 font-mono dark:bg-violet-950">
             npm run task:seed
           </code>
-          ，在「任务看板」Tab 查看；也可用{" "}
+          ，在「任务看板」里查看；也可用{" "}
           <code className="rounded bg-violet-100/80 px-1 font-mono dark:bg-violet-950">
             agent:push --task-title &quot;…&quot; --status in_progress
-          </code>
+          </code>{" "}
+          模拟 Agent 改状态。
         </p>
       </div>
     </section>

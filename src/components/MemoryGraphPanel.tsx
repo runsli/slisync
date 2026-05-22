@@ -57,7 +57,7 @@ export function MemoryGraphPanel({
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-          图导航
+          记忆结构
         </p>
         <div className="flex items-center gap-1 rounded-lg border border-zinc-200 p-0.5 text-[10px] dark:border-zinc-700">
           {(["tree", "force"] as const).map((mode) => (
@@ -78,7 +78,7 @@ export function MemoryGraphPanel({
       </div>
 
       {!syncReady ? (
-        <p className="text-xs text-zinc-500">等待 CRDT 同步完成后可编辑图…</p>
+        <p className="text-xs text-zinc-500">正在与其它窗口同步，请稍候…</p>
       ) : (
         <div className="flex flex-wrap gap-2">
           <button
@@ -95,7 +95,7 @@ export function MemoryGraphPanel({
             onClick={onAddChunk}
             className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-violet-500 disabled:opacity-40 dark:bg-violet-500 dark:hover:bg-violet-400"
           >
-            + 新建 memory_chunk
+            + 新建记忆片段
           </button>
         </div>
       )}

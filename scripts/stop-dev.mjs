@@ -35,11 +35,11 @@ try {
   }
   if (lock.port) killPort(lock.port);
   unlinkSync(lockPath);
-  console.log(`[infra] Removed dev lock (was pid ${lock.pid ?? "?"}).`);
+  console.log(`[slisync] Removed dev lock (was pid ${lock.pid ?? "?"}).`);
   stopped = true;
 } catch (err) {
   if (err && typeof err === "object" && "code" in err && err.code !== "ENOENT") {
-    console.warn("[infra] Could not read lock file:", err);
+    console.warn("[slisync] Could not read lock file:", err);
   }
 }
 
@@ -58,7 +58,7 @@ try {
 }
 
 if (stopped) {
-  console.log("[infra] Dev server stopped. Run: npm run dev");
+  console.log("[slisync] Dev server stopped. Run: npm run dev");
 } else {
-  console.log("[infra] No dev server found on port 3000.");
+  console.log("[slisync] No dev server found on port 3000.");
 }

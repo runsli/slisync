@@ -70,15 +70,15 @@ export function MemoryChunkEditor({
 
   if (!syncReady) {
     return (
-      <p className="text-sm text-zinc-500">等待 CRDT 同步完成后可编辑记忆块…</p>
+      <p className="text-sm text-zinc-500">正在同步，稍后即可编辑…</p>
     );
   }
 
   if (!node) {
     return (
       <p className="text-sm text-zinc-500">
-        在左侧图中选择 <span className="font-medium">memory_chunk</span>{" "}
-        节点，或点击「+ 新建 memory_chunk」开始编辑。
+        在左侧点一条<span className="font-medium">记忆片段</span>
+        ，或点「+ 新建记忆片段」开始写。
       </p>
     );
   }
@@ -92,7 +92,7 @@ export function MemoryChunkEditor({
           已选节点：{node.kind} · {node.title}
         </p>
         <p className="text-xs text-zinc-500">
-          仅 memory_chunk 可编辑正文。请选择子级 chunk 或新建 memory_chunk。
+          只有「记忆片段」能改正文。请选其子级片段，或新建一条记忆片段。
         </p>
         {workspaceId ? (
           <p className="text-xs text-zinc-500">

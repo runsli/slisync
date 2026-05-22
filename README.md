@@ -1,19 +1,33 @@
 # Slisync
 
-**Realtime shared-memory sync for multi-agent rooms** (optional export to [Aonote](https://aonote.vercel.app))
+**One shared project memory for people and multiple AIs** — edit together in realtime, export **Markdown** when you are ready to publish.
 
 [中文](./README.zh-CN.md) · [GitHub](https://github.com/runsli/slisync) · [slisync.com](https://slisync.com)
 
-> **Sli** = *scoped live information* in a room — layered memory merged via CRDT.  
-> Reference implementation: [docs/en/VISION.md](./docs/en/VISION.md).
+> GitHub repo: [runsli/slisync](https://github.com/runsli/slisync). Clone into a folder named `slisync`.  
+> **room** = collaboration space; **memory_chunk** = an exportable memory snippet.
+
+---
+
+## I want to…
+
+| I want to… | How |
+|------------|-----|
+| **Try shared memory in 5 minutes** | [Quick start](#quick-start) → open **Shared memory** in the demo |
+| **Read product docs (website)** | [slisync-docs](../slisync-docs/) → `cd ../slisync-docs && npm run dev` (:5173) |
+| **Export memory as Markdown** | [docs/en/export.md](./docs/en/export.md) |
+| **Integrate into my app** | [packages/README.md](./packages/README.md) · [docs/en/](./docs/en/) |
+| **Protocol & implementation status** | [docs/en/ROADMAP.md](./docs/en/ROADMAP.md) |
+
+**Docs split:** user-facing site = **[slisync-docs](../slisync-docs/)** only (not `文档/` under this repo). This repo’s `docs/en` is protocol and engineering detail.
 
 ---
 
 ## What is it?
 
-Not a chat app, not Web3, not a thin wrapper.
+Not a chat app, not Web3, not a thin LLM wrapper.
 
-**Slisync** is an **AI-native realtime sync engine** so agents share memory, state, and context in a **room**, then publish to Aonote. Transport: **Socket.IO + Yjs CRDT** (optional LWW + JSON Patch). Agents write via Socket or HTTP.
+**Slisync** keeps **project memory in one place** while humans and agents collaborate, then **publishes** what matters via Markdown export. Under the hood: **Socket.IO + Yjs CRDT**; agents write via Socket or HTTP.
 
 | Package | Role |
 |---------|------|
@@ -34,7 +48,7 @@ Details: [docs/en/VISION.md](./docs/en/VISION.md#2-why-it-matters).
 
 ## Roadmap
 
-12-phase product vision vs implementation: [docs/en/ROADMAP.md](./docs/en/ROADMAP.md) · Aonote export: [docs/en/export.md](./docs/en/export.md) · HTTP: [docs/en/export-http.md](./docs/en/export-http.md)
+12-phase product vision vs implementation: [docs/en/ROADMAP.md](./docs/en/ROADMAP.md) · Markdown export: [docs/en/export.md](./docs/en/export.md) · HTTP: [docs/en/export-http.md](./docs/en/export-http.md)
 
 | Vision | Theme | This repo |
 |--------|-------|-----------|
@@ -60,7 +74,7 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-**Primary path: scoped memory** — edit `workspace → session → memory_chunk` in a two-column Demo with Presence and Agent hints ([demo-scoped-memory](./docs/en/demo-scoped-memory.md)). **Task board** tab — kanban tasks in the same room via CRDT ([task-bus](./docs/en/task-bus.md)). **Local-first:** Graph and chunks survive refresh via IndexedDB — [local-first](./docs/en/local-first.md).
+Open **Shared memory** to edit project notes with live sync; **Task board** for kanban-style work (`npm run task:seed`). Edits survive refresh — [local-first](./docs/en/local-first.md). Walkthrough: [demo-scoped-memory](./docs/en/demo-scoped-memory.md).
 
 ```bash
 npm run graph:seed
@@ -69,7 +83,7 @@ npm run task:seed
 npm run agent:push -- --task-title "Review export pipeline" --status in_progress
 ```
 
-Aonote loop: seed scoped memory → HTTP export Markdown ([export-http.md](./docs/en/export-http.md)); offline file export: `npm run export:chunks`.
+Export loop: seed memory → `export:chunks:http` ([export-http.md](./docs/en/export-http.md)); offline: `npm run export:chunks`. Publish with your own static site or CMS.
 
 > Legacy `message` / `counter` and LWW comparison live under collapsed **legacy shared fields** and **Advanced: LWW** sections.
 
@@ -186,6 +200,26 @@ slisync/
 
 ## Documentation
 
+### Product site (VitePress)
+
+Run from the **slisync-docs** sibling repo (clone next to this repo):
+
+```bash
+cd ../slisync-docs
+nvm use 20
+npm install
+npm run dev      # http://localhost:5173
+npm run build
+```
+
+Do not use `infra/文档/GitHub/` — that path is obsolete.
+
+| Site | Repo |
+|------|------|
+| User docs & guides | [slisync-docs](../slisync-docs/) |
+
+### In-repo (protocol / engineering)
+
 | Doc | Language |
 |-----|----------|
 | [docs/en/VISION.md](./docs/en/VISION.md) | English |
@@ -194,6 +228,8 @@ slisync/
 | [docs/zh/ROADMAP.md](./docs/zh/ROADMAP.md) | 中文 |
 | [docs/en/export.md](./docs/en/export.md) | English |
 | [docs/zh/export.md](./docs/zh/export.md) | 中文 |
+| [docs/en/story-pipeline.md](./docs/en/story-pipeline.md) | English |
+| [docs/zh/story-pipeline.md](./docs/zh/story-pipeline.md) | 中文 |
 | [docs/en/demo-scoped-memory.md](./docs/en/demo-scoped-memory.md) | English |
 | [docs/zh/demo-scoped-memory.md](./docs/zh/demo-scoped-memory.md) | 中文 |
 | [packages/README.md](./packages/README.md) | English (technical) |

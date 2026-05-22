@@ -1,12 +1,16 @@
-# Slisync docs (English)
+# English docs
 
-[中文](../zh/README.md)
+[中文](../zh/README.md) · [Index](../README.md)
 
-| Doc | Description |
-|-----|-------------|
-| [VISION.md](./VISION.md) | Slisync product vision, Aonote ecosystem, principles |
-| [ROADMAP.md](./ROADMAP.md) | 12-phase vision × implementation status |
-| [export.md](./export.md) | Aonote Markdown export (CLI/SDK) |
-| [export-http.md](./export-http.md) | HTTP export contract and persistence design |
+## Quick links
 
-See also [README.md](../../README.md) and [packages/README.md](../../packages/README.md).
+- [Scoped memory demo](./demo-scoped-memory.md)
+- [Export Markdown](./export.md)
+- [HTTP export](./export-http.md)
+- [Memory → Markdown → site](./story-pipeline.md)
+- [Local-first](./local-first.md)
+- [Task bus](./task-bus.md)
+- [Roadmap](./ROADMAP.md)
+- [Vision](./VISION.md)
+
+Product website: [slisync-docs](https://github.com/runsli/slisync-docs)

@@ -10,10 +10,10 @@ const targets = [
 for (const path of targets) {
   try {
     await rm(path, { force: true });
-    console.log(`[infra] removed ${path}`);
+    console.log(`[slisync] removed ${path}`);
   } catch (err) {
-    console.warn(`[infra] could not remove ${path}:`, err);
+    console.warn(`[slisync] could not remove ${path}:`, err);
   }
 }
 
-console.log("[infra] Sync data cleared. Restart: npm run dev");
+console.log("[slisync] Sync data cleared. Restart: npm run dev");
