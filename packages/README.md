@@ -191,6 +191,12 @@ Authorization: Bearer <SYNC_AGENT_API_KEY>
 
 `fetchGraphTraverseHttp()`
 
+### HTTP export (memory_chunk → JSON)
+
+`GET /v1/rooms/:roomId/export/chunks?workspaceId=...&sessionId=...&minImportance=...`
+
+`fetchExportChunksHttp()` · `npm run export:chunks:http` — see [docs/en/export-http.md](../docs/en/export-http.md)
+
 ---
 
 ## Auth & agent graph policy (Phase 8)
@@ -276,7 +282,7 @@ Details: [docs/en/local-first.md](../docs/en/local-first.md)
 npm test
 ```
 
-Covers CRDT seed, late join, graph activity, HTTP ops/traverse, idempotency, auth, scoped memory, presence, capabilities, offline outbox.
+Covers CRDT seed, late join, graph activity, HTTP ops/traverse/export, idempotency, auth, scoped memory, presence, capabilities, offline outbox.
 
 ---
 

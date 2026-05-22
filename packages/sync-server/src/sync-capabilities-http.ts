@@ -16,6 +16,7 @@ export type SyncCapabilitiesResponse = {
     offlineOutbox: boolean;
     scopedMemory: boolean;
     graphHttp: boolean;
+    exportChunks: boolean;
     audit: boolean;
   };
   agentGraphPolicy: ReturnType<typeof summarizeAgentGraphPolicy>;
@@ -45,6 +46,7 @@ export function handleSyncCapabilitiesGet(
       offlineOutbox: true,
       scopedMemory: true,
       graphHttp: true,
+      exportChunks: true,
       audit: true,
     },
     agentGraphPolicy: summarizeAgentGraphPolicy(policy),
@@ -65,6 +67,7 @@ export function defaultCapabilitiesSnapshot(): SyncCapabilitiesResponse {
       offlineOutbox: true,
       scopedMemory: true,
       graphHttp: true,
+      exportChunks: true,
       audit: true,
     },
     agentGraphPolicy: summarizeAgentGraphPolicy(DEFAULT_AGENT_GRAPH_POLICY),

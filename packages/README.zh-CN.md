@@ -78,6 +78,7 @@ npm run graph:traverse:http -- --start <nodeId>
 
 - `POST /v1/graphs/:roomId/ops`
 - `GET /v1/graphs/:roomId/traverse?startId=...&workspaceId=...&sessionId=...`
+- `GET /v1/rooms/:roomId/export/chunks` — `fetchExportChunksHttp()` · `npm run export:chunks:http`（[export-http.md](../docs/zh/export-http.md)）
 - `MemoryGraph.upsertChunk()` · `MemoryGraph.upsertTask()` · `buildScopedMemoryOps()` · `buildDemoTaskOps()`
 
 详见 [task-bus.md](../docs/zh/task-bus.md)。

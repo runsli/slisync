@@ -24,8 +24,8 @@ flowchart LR
 | M0 | 本文档 | 路径约定与验收步骤 |
 | M1 | `@slisync/sync-sdk` `export-chunks.ts` | 从 snapshot / Yjs update 生成文件描述 |
 | M2 | `npm run export:chunks` | 从 CRDT JSON 读 room 并写盘（本地或 fixture） |
-| M3 | HTTP GET | 见 [export-http.md](./export-http.md)（Phase 0 契约；handler Phase 1） |
-| M4 | 可选 PostgreSQL CRDT 持久化 | `SYNC_CRDT_POSTGRES_URL` + `npm run dev:postgres`（见 [export-http.md](./export-http.md#持久化)） |
+| M3 | HTTP GET | ✅ [export-http.md](./export-http.md) · `npm run export:chunks:http` |
+| M4 | 可选 PostgreSQL CRDT 持久化 | ✅ `SYNC_CRDT_POSTGRES_URL` + `npm run dev:postgres`（[export-http.md](./export-http.md#持久化)） |
 | M3+ | 青笺仓库对接 | 仓库侧消费 Markdown |
 
 ---
@@ -165,10 +165,16 @@ git add fixtures/crdt-rooms.example.json
 
 ## 验收链
 
-**本地（live）：**
+**本地（live，文件）：**
 
 1. `npm run graph:seed` 成功。
 2. `npm run export:chunks` 在 `markdown/chunks/` 下生成至少 2 个 `.md`。
+
+**本地（live，HTTP）：**
+
+1. `npm run dev` + `npm run graph:seed`。
+2. `npm run export:chunks:http -- --room example-room --out ./markdown/chunks`（或按 [export-http.md](./export-http.md) 用 curl / `fetchExportChunksHttp`）。
+3. 与 `export:chunks` 落盘的 `relativePath` 与内容一致（同一 CRDT 持久化时）。
 
 **CI / fixture（无需 dev）：**
 

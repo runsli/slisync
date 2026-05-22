@@ -32,7 +32,7 @@
 
 | 愿景 | 主题 | 状态 | 本仓库实现 |
 |------|------|------|------------|
-| **4** | Persistence | ✅ | 内存 / JSON / Redis — **Phase 3** |
+| **4** | Persistence | ✅ | 内存 / JSON 文件 / Redis / 可选 PostgreSQL — **Phase 3**[^p4] |
 | **5** | Conflict Resolution | ✅ | Yjs CRDT — **P1-4** |
 | **6** | SDK 产品化 | ✅ | `@slisync/*` — **P0-3** |
 
@@ -69,7 +69,7 @@
 1. [VISION.md](./VISION.md)
 2. [demo-scoped-memory.md](./demo-scoped-memory.md) — 5 分钟 Scoped Memory 验收
 3. [task-bus.md](./task-bus.md) — 5 分钟任务看板 + `task:seed` / `agent:push`
-4. [export.md](./export.md) — 青笺 Memory Chunk 导出（M0–M2）
+4. [export.md](./export.md) — 青笺导出（M0–M2 文件 + M3 HTTP [export-http.md](./export-http.md)）
 5. [README.zh-CN.md](../../README.zh-CN.md)
 6. [packages/README.zh-CN.md](../../packages/README.zh-CN.md)
 7. [.env.example](../../.env.example)
@@ -82,6 +82,8 @@
 2. ~~IndexedDB + outbox 统一~~（已完成，见 [local-first.md](./local-first.md)）  
 3. ~~Demo 以 scoped memory 为主~~（已完成，见 [demo-scoped-memory.md](./demo-scoped-memory.md)）  
 4. ~~Agent 任务总线~~ — 已完成，见 [task-bus.md](./task-bus.md)  
-5. 可选 PostgreSQL / HTTP export（M4）  
+5. ✅ **M4 青笺生态** — HTTP export M3：[export-http.md](./export-http.md)（`fetchExportChunksHttp` / `export:chunks:http`）；可选 PostgreSQL M4b ✅：`SYNC_CRDT_POSTGRES_URL`（[持久化](./export-http.md#持久化)）  
 
 **不做：** 语义检索、Web3、套壳聊天。
+
+[^p4]: CRDT 持久化互斥选一：`SYNC_CRDT_DATA_PATH`（JSON 文件）、`REDIS_URL`、`SYNC_CRDT_POSTGRES_URL`（PostgreSQL）。

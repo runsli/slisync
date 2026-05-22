@@ -34,7 +34,7 @@
 
 ## 路线图
 
-[docs/zh/ROADMAP.md](./docs/zh/ROADMAP.md) · 青笺导出：[docs/zh/export.md](./docs/zh/export.md) · 工程 Phase：[packages/README.zh-CN.md](./packages/README.zh-CN.md#engineering-phases)
+[docs/zh/ROADMAP.md](./docs/zh/ROADMAP.md) · 青笺导出：[docs/zh/export.md](./docs/zh/export.md) · HTTP：[docs/zh/export-http.md](./docs/zh/export-http.md) · 工程 Phase：[packages/README.zh-CN.md](./packages/README.zh-CN.md#engineering-phases)
 
 ---
 
@@ -51,9 +51,13 @@ npm run dev
 打开 [http://localhost:3000](http://localhost:3000)。**主路径：Scoped Memory**（[demo-scoped-memory](./docs/zh/demo-scoped-memory.md)）+ **任务看板** Tab（[task-bus](./docs/zh/task-bus.md)，`npm run task:seed`）。**Local-first（CRDT）**：刷新不丢 Graph 与 chunk — [local-first](./docs/zh/local-first.md)。
 
 ```bash
+npm run graph:seed
+npm run export:chunks:http -- --room example-room --out ./markdown/chunks
 npm run task:seed
 npm run agent:push -- --task-title "审查导出流水线" --status in_progress
 ```
+
+青笺闭环：`graph:seed` → `export:chunks:http`（或 curl，见 [export-http.md](./docs/zh/export-http.md)）；离线文件导出：`npm run export:chunks`。
 
 > 旧版 `message` / `counter` 与 LWW 对比在 Demo 折叠区「旧版共享字段演示」「高级：LWW 对比实验」。
 
@@ -101,6 +105,8 @@ if (doc && syncReady) {
 | [packages/README.md](./packages/README.md) | Technical (English) |
 | [docs/zh/demo-scoped-memory.md](./docs/zh/demo-scoped-memory.md) | Demo 主路径验收 |
 | [docs/zh/task-bus.md](./docs/zh/task-bus.md) | Room 任务看板与 CLI |
+| [docs/zh/export.md](./docs/zh/export.md) | 青笺 Markdown 导出 |
+| [docs/zh/export-http.md](./docs/zh/export-http.md) | HTTP 导出 |
 | [docs/README.md](./docs/README.md) | 文档索引 |
 
 ---

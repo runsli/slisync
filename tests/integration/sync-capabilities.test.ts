@@ -26,6 +26,7 @@ describe("sync capabilities API", () => {
     assert.equal(res.data.protocolVersion, 1);
     assert.equal(res.data.crdtAuthority, true);
     assert.equal(res.data.features.scopedMemory, true);
+    assert.equal(res.data.features.exportChunks, true);
 
     const summary = summarizeAgentGraphPolicy();
     assert.ok(res.data.agentGraphPolicy.allowedOps.length > 0);

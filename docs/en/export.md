@@ -24,8 +24,8 @@ flowchart LR
 | M0 | This doc | Paths and acceptance |
 | M1 | `@slisync/sync-sdk` `export-chunks.ts` | Snapshot / update → in-memory files |
 | M2 | `npm run export:chunks` | Read CRDT JSON (local or fixture), write disk |
-| M3 | HTTP GET | [export-http.md](./export-http.md) (Phase 0 contract; handler in Phase 1) |
-| M4 | Optional PostgreSQL CRDT persistence | `SYNC_CRDT_POSTGRES_URL` + `npm run dev:postgres` ([export-http.md](./export-http.md#persistence)) |
+| M3 | HTTP GET | ✅ [export-http.md](./export-http.md) · `npm run export:chunks:http` |
+| M4 | Optional PostgreSQL CRDT persistence | ✅ `SYNC_CRDT_POSTGRES_URL` + `npm run dev:postgres` ([export-http.md](./export-http.md#persistence)) |
 | M3+ | Aonote repo wiring | Consume Markdown in the Aonote repo |
 
 ---
@@ -138,7 +138,9 @@ Filters: `SYNC_EXPORT_WORKSPACE`, `SYNC_EXPORT_SESSION`, `SYNC_EXPORT_MIN_IMPORT
 
 ## Acceptance
 
-**Local:** `graph:seed` → `export:chunks` → ≥2 `.md` under `markdown/chunks/`.
+**Local (file):** `graph:seed` → `export:chunks` → ≥2 `.md` under `markdown/chunks/`.
+
+**Local (HTTP):** `npm run dev` + `graph:seed` → `npm run export:chunks:http -- --room example-room --out ./markdown/chunks` (or curl / `fetchExportChunksHttp` per [export-http.md](./export-http.md)). Compare with file export when using the same persistence.
 
 **CI:** `npm run export:chunks:ci` uses the fixture; the `CI` GitHub workflow runs the same step.
 

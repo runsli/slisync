@@ -31,7 +31,7 @@ This document maps the **12-phase product vision** in [VISION.md](./VISION.md) t
 
 | Vision | Theme | Status | In this repo |
 |--------|-------|--------|--------------|
-| **4** | Persistence | ✅ | Memory / JSON / `REDIS_URL` — **eng. Phase 3** |
+| **4** | Persistence | ✅ | Memory / JSON file / Redis / optional PostgreSQL — **eng. Phase 3**[^p4] |
 | **5** | Conflict Resolution | ✅ | Yjs CRDT primary; LWW optional — **P1-4** authority |
 | **6** | SDK productization | ✅ | `@slisync/*`, `build:packages` — **P0-3** |
 
@@ -73,7 +73,7 @@ Parallel **engineering IDs** (commits / comments):
 1. Motivation → [VISION.md](./VISION.md)
 2. Scoped memory Demo → [demo-scoped-memory.md](./demo-scoped-memory.md)
 3. Room task bus → [task-bus.md](./task-bus.md) (`task:seed`, task board tab)
-4. Aonote export → [export.md](./export.md) (M0–M2)
+4. Aonote export → [export.md](./export.md) (M0–M2 file + M3 HTTP [export-http.md](./export-http.md))
 5. Run app → [README.md](../../README.md)
 6. Protocol & API → [packages/README.md](../../packages/README.md)
 7. Config → [.env.example](../../.env.example)
@@ -86,6 +86,8 @@ Parallel **engineering IDs** (commits / comments):
 2. ✅ **Vision 2** — IndexedDB + unified outbox — [local-first.md](./local-first.md)
 3. ✅ **Vision 7** — Demo centered on scoped memory — [demo-scoped-memory.md](./demo-scoped-memory.md)
 4. ~~**Vision 10** — Room-level agent task bus~~ — done; see [task-bus.md](./task-bus.md)
-5. **Vision 4** — Optional PostgreSQL / HTTP export (M4)
+5. ✅ **M4 Aonote ecosystem** — HTTP export M3: [export-http.md](./export-http.md) (`fetchExportChunksHttp`, `export:chunks:http`); optional PostgreSQL M4b ✅: `SYNC_CRDT_POSTGRES_URL` ([persistence](./export-http.md#persistence))
 
 **Not planned here:** vision 9 (semantic search), Web3, chat super-app.
+
+[^p4]: CRDT persistence (one backend): `SYNC_CRDT_DATA_PATH` (JSON file), `REDIS_URL`, or `SYNC_CRDT_POSTGRES_URL` (PostgreSQL).

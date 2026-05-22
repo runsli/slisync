@@ -34,7 +34,7 @@ Details: [docs/en/VISION.md](./docs/en/VISION.md#2-why-it-matters).
 
 ## Roadmap
 
-12-phase product vision vs implementation: [docs/en/ROADMAP.md](./docs/en/ROADMAP.md) · Aonote export: [docs/en/export.md](./docs/en/export.md)
+12-phase product vision vs implementation: [docs/en/ROADMAP.md](./docs/en/ROADMAP.md) · Aonote export: [docs/en/export.md](./docs/en/export.md) · HTTP: [docs/en/export-http.md](./docs/en/export-http.md)
 
 | Vision | Theme | This repo |
 |--------|-------|-----------|
@@ -63,9 +63,13 @@ Open [http://localhost:3000](http://localhost:3000).
 **Primary path: scoped memory** — edit `workspace → session → memory_chunk` in a two-column Demo with Presence and Agent hints ([demo-scoped-memory](./docs/en/demo-scoped-memory.md)). **Task board** tab — kanban tasks in the same room via CRDT ([task-bus](./docs/en/task-bus.md)). **Local-first:** Graph and chunks survive refresh via IndexedDB — [local-first](./docs/en/local-first.md).
 
 ```bash
+npm run graph:seed
+npm run export:chunks:http -- --room example-room --out ./markdown/chunks
 npm run task:seed
 npm run agent:push -- --task-title "Review export pipeline" --status in_progress
 ```
+
+Aonote loop: seed scoped memory → HTTP export Markdown ([export-http.md](./docs/en/export-http.md)); offline file export: `npm run export:chunks`.
 
 > Legacy `message` / `counter` and LWW comparison live under collapsed **legacy shared fields** and **Advanced: LWW** sections.
 
