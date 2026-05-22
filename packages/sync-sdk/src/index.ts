@@ -98,6 +98,13 @@ export {
   type FetchGraphTraverseHttpResult,
 } from "./graph/fetch-graph-traverse-http";
 export {
+  fetchExportChunksHttp,
+  buildExportChunksHttpUrl,
+  appendExportChunksQuery,
+  type FetchExportChunksHttpOptions,
+  type FetchExportChunksHttpResult,
+} from "./graph/fetch-export-chunks-http";
+export {
   validateGraphOps,
   DEFAULT_AGENT_GRAPH_POLICY,
   type AgentGraphPolicy,

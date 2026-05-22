@@ -1,5 +1,6 @@
 /**
  * Export memory_chunk nodes from persisted CRDT room data to Markdown.
+ * For live-server HTTP export see docs/en/export-http.md and npm run export:chunks:http.
  *
  * Usage:
  *   npm run dev              # terminal 1 (optional, to seed)

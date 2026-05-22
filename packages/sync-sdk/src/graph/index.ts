@@ -30,6 +30,13 @@ export {
   type FetchGraphTraverseHttpResult,
 } from "./fetch-graph-traverse-http";
 export {
+  appendExportChunksQuery,
+  buildExportChunksHttpUrl,
+  fetchExportChunksHttp,
+  type FetchExportChunksHttpOptions,
+  type FetchExportChunksHttpResult,
+} from "./fetch-export-chunks-http";
+export {
   fetchAuditHttp,
   type FetchAuditHttpOptions,
   type FetchAuditHttpResult,

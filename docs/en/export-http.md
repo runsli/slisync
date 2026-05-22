@@ -2,9 +2,21 @@
 
 [中文](../zh/export-http.md)
 
-Read-only HTTP export of `memory_chunk` nodes from the server **CrdtRoomStore**. Response shape is defined in `@slisync/sync-schema` (`ExportChunksHttpResponse`). **Phase 0**: types and docs only — no route registration yet.
+Read-only HTTP export of `memory_chunk` nodes from the server **CrdtRoomStore**. Response shape is defined in `@slisync/sync-schema` (`ExportChunksHttpResponse`). Handler: `packages/sync-server/src/export-http.ts`. Client: `fetchExportChunksHttp` in `@slisync/sync-sdk/graph`.
 
 See also: [export.md](./export.md) (CLI/SDK) · Graph HTTP (`POST /v1/graphs/:roomId/ops`, `GET /v1/graphs/:roomId/traverse`).
+
+---
+
+## Three export paths
+
+| Path | Command | Data source |
+|------|---------|-------------|
+| Local file | `npm run export:chunks` | `.sync-data/crdt-rooms.json` or `SYNC_CRDT_DATA_PATH` |
+| Fixture (CI) | `npm run export:chunks:ci` | `fixtures/crdt-rooms.example.json` (no dev server) |
+| Live HTTP | `npm run export:chunks:http` | Running sync server (`npm run dev` + `graph:seed`) |
+
+With the same room and persistence, file and HTTP exports should produce the same `relativePath` set and Markdown content.
 
 ---
 
@@ -78,6 +90,53 @@ Types: `ExportChunksHttpSuccess`, `ExportChunksHttpFile`, `ExportChunksHttpRespo
 
 ---
 
+## SDK (Phase 2)
+
+```ts
+import { fetchExportChunksHttp } from "@slisync/sync-sdk/graph";
+
+const result = await fetchExportChunksHttp({
+  baseUrl: "http://127.0.0.1:3000",
+  roomId: "example-room",
+  workspaceId: "ws-demo",
+  minImportance: 0.5,
+});
+
+if (result.ok) {
+  for (const file of result.files) {
+    console.log(file.relativePath, file.markdown.slice(0, 80));
+  }
+}
+```
+
+Uses `getSyncHttpBase`, `getAgentSyncToken`, and `withSyncProtocolHeaders` (same as `fetchGraphTraverseHttp`).
+
+---
+
+## CLI (Phase 2)
+
+```bash
+npm run dev
+npm run graph:seed
+npm run export:chunks:http -- --room example-room --out ./markdown/chunks
+```
+
+| Env | Role |
+|-----|------|
+| `SYNC_EXPORT_HTTP_URL` / `SYNC_HTTP_URL` / `SYNC_URL` | Server base (default `http://127.0.0.1:3000`) |
+| `SYNC_ROOM` | Room id (default `example-room`) |
+| `SYNC_EXPORT_WORKSPACE` / `SYNC_EXPORT_SESSION` / `SYNC_EXPORT_MIN_IMPORTANCE` | Query filters |
+
+Compare with offline export:
+
+```bash
+npm run export:chunks -- --room example-room --out /tmp/file-export
+npm run export:chunks:http -- --room example-room --out /tmp/http-export
+# diff -r the two trees
+```
+
+---
+
 ## Error responses
 
 | HTTP | When | Body |
@@ -114,7 +173,10 @@ npm run dev
 # Terminal 2 — seed graph into example-room
 npm run graph:seed
 
-# Terminal 3 — HTTP export (after Phase 1 handler exists)
+# Terminal 3 — HTTP export (SDK or CLI)
+npm run export:chunks:http -- --room example-room --out ./markdown/chunks
+
+# Or curl
 curl -sS \
   -H "X-Sync-Protocol-Version: 1" \
   -H "X-Sync-Agent-Key: $SYNC_AGENT_API_KEY" \
@@ -132,11 +194,7 @@ npm run export:chunks:ci -- --out ./markdown/chunks
 
 Counts and `relativePath` values should match between HTTP JSON and CLI-written files when both read the same `SYNC_CRDT_DATA_PATH` / fixture.
 
-**Typecheck (Phase 0):**
-
-```bash
-npm run typecheck -w @slisync/sync-schema
-```
+**Tests:** `tests/integration/export-http.test.ts`, `tests/unit/fetch-export-chunks-http.test.ts` (in `npm test`).
 
 ---
 
@@ -145,4 +203,4 @@ npm run typecheck -w @slisync/sync-schema
 - Markdown → CRDT write-back
 - IndexedDB / browser local-first as HTTP export source
 - Exporting `task` or other non-`memory_chunk` node kinds
-- `pg` dependency or `export-http.ts` handler (Phase 1)
+- PostgreSQL CRDT persistence (Phase 3)

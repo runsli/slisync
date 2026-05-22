@@ -2,9 +2,21 @@
 
 [English](../en/export-http.md)
 
-通过 HTTP 只读导出服务端 **CrdtRoomStore** 中的 `memory_chunk` 节点。响应类型见 `@slisync/sync-schema`（`ExportChunksHttpResponse`）。**Phase 0** 仅定稿契约与文档，尚未注册路由。
+通过 HTTP 只读导出服务端 **CrdtRoomStore** 中的 `memory_chunk` 节点。响应类型见 `@slisync/sync-schema`（`ExportChunksHttpResponse`）。Handler：`packages/sync-server/src/export-http.ts`；客户端：`@slisync/sync-sdk/graph` 的 `fetchExportChunksHttp`。
 
 另见：[export.md](./export.md)（CLI/SDK）· Graph HTTP（`POST /v1/graphs/:roomId/ops`、`GET /v1/graphs/:roomId/traverse`）。
+
+---
+
+## 三条导出路径
+
+| 路径 | 命令 | 数据源 |
+|------|------|--------|
+| 本地文件 | `npm run export:chunks` | `.sync-data/crdt-rooms.json` 或 `SYNC_CRDT_DATA_PATH` |
+| Fixture（CI） | `npm run export:chunks:ci` | `fixtures/crdt-rooms.example.json`（无需 dev） |
+| Live HTTP | `npm run export:chunks:http` | 运行中的 sync 服务（`npm run dev` + `graph:seed`） |
+
+同一 room 与持久化下，文件导出与 HTTP 导出的 `relativePath` 与 Markdown 内容应一致。
 
 ---
 
@@ -78,6 +90,53 @@
 
 ---
 
+## SDK（Phase 2）
+
+```ts
+import { fetchExportChunksHttp } from "@slisync/sync-sdk/graph";
+
+const result = await fetchExportChunksHttp({
+  baseUrl: "http://127.0.0.1:3000",
+  roomId: "example-room",
+  workspaceId: "ws-demo",
+  minImportance: 0.5,
+});
+
+if (result.ok) {
+  for (const file of result.files) {
+    console.log(file.relativePath, file.markdown.slice(0, 80));
+  }
+}
+```
+
+与 `fetchGraphTraverseHttp` 相同：使用 `getSyncHttpBase`、`getAgentSyncToken`、`withSyncProtocolHeaders`。
+
+---
+
+## CLI（Phase 2）
+
+```bash
+npm run dev
+npm run graph:seed
+npm run export:chunks:http -- --room example-room --out ./markdown/chunks
+```
+
+| 环境变量 | 说明 |
+|----------|------|
+| `SYNC_EXPORT_HTTP_URL` / `SYNC_HTTP_URL` / `SYNC_URL` | 服务根 URL（默认 `http://127.0.0.1:3000`） |
+| `SYNC_ROOM` | room id（默认 `example-room`） |
+| `SYNC_EXPORT_WORKSPACE` / `SYNC_EXPORT_SESSION` / `SYNC_EXPORT_MIN_IMPORTANCE` | Query 过滤 |
+
+与离线导出对比：
+
+```bash
+npm run export:chunks -- --room example-room --out /tmp/file-export
+npm run export:chunks:http -- --room example-room --out /tmp/http-export
+# diff -r 两个目录
+```
+
+---
+
 ## 错误响应
 
 | HTTP | 场景 | Body |
@@ -114,7 +173,10 @@ npm run dev
 # 终端 2 — 向 example-room 写入图
 npm run graph:seed
 
-# 终端 3 — HTTP 导出（Phase 1 实现 handler 后）
+# 终端 3 — HTTP 导出（SDK 或 CLI）
+npm run export:chunks:http -- --room example-room --out ./markdown/chunks
+
+# 或 curl
 curl -sS \
   -H "X-Sync-Protocol-Version: 1" \
   -H "X-Sync-Agent-Key: $SYNC_AGENT_API_KEY" \
@@ -132,11 +194,7 @@ npm run export:chunks:ci -- --out ./markdown/chunks
 
 在相同 `SYNC_CRDT_DATA_PATH` / fixture 下，HTTP JSON 的 `count`、`relativePath` 应与 CLI 落盘结果一致。
 
-**Phase 0 类型检查：**
-
-```bash
-npm run typecheck -w @slisync/sync-schema
-```
+**测试：** `tests/integration/export-http.test.ts`、`tests/unit/fetch-export-chunks-http.test.ts`（已纳入 `npm test`）。
 
 ---
 
@@ -145,4 +203,4 @@ npm run typecheck -w @slisync/sync-schema
 - Markdown → CRDT 回写
 - 以 IndexedDB / 浏览器 local-first 作为 HTTP 导出源
 - 导出 `task` 等非 `memory_chunk` 节点
-- 引入 `pg` 依赖或实现 `export-http.ts` handler（Phase 1）
+- PostgreSQL CRDT 持久化（Phase 3）

@@ -18,6 +18,7 @@ jobs:
 
       - run: npm ci
 
+      # HTTP chunk export: tests/integration/export-http.test.ts (fetchExportChunksHttp + in-process server)
       - run: npm test
 
       - name: Export memory chunks (fixture, no dev server)

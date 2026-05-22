@@ -3,6 +3,7 @@ import { after, before, describe, it } from "node:test";
 import type { ExportChunksHttpResponse } from "@slisync/sync-schema";
 import {
   buildScopedMemoryOps,
+  fetchExportChunksHttp,
   pushGraphOpsHttp,
 } from "@slisync/sync-sdk/graph";
 import { withSyncProtocolHeaders } from "@slisync/sync-sdk";
@@ -65,6 +66,31 @@ describe("export HTTP integration", () => {
     assert.ok(body.files.length >= 1);
     assert.match(body.files[0]!.markdown, /kind:\s*memory_chunk/);
     assert.ok(body.exportedAt);
+  });
+
+  it("fetchExportChunksHttp matches raw GET response", async () => {
+    const roomId = uniqueRoom("export-sdk");
+    const seed = await pushGraphOpsHttp({
+      baseUrl,
+      roomId,
+      agentId: "export-agent",
+      action: "seed_scoped_memory",
+      graphOps: buildScopedMemoryOps("export-agent"),
+    });
+    assert.equal(seed.ok, true);
+
+    const sdk = await fetchExportChunksHttp({ baseUrl, roomId });
+    const raw = await fetchExportChunks(baseUrl, roomId);
+
+    assert.equal(sdk.ok, true);
+    assert.equal(raw.status, 200);
+    assert.equal(raw.body.ok, true);
+    if (!sdk.ok || !raw.body.ok) return;
+
+    assert.equal(sdk.status, 200);
+    assert.equal(sdk.roomId, raw.body.roomId);
+    assert.equal(sdk.count, raw.body.count);
+    assert.deepEqual(sdk.files, raw.body.files);
   });
 
   it("GET export returns count 0 for empty room", async () => {
