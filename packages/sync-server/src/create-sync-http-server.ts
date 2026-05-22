@@ -10,6 +10,7 @@ import { loadSyncAuthConfig } from "./auth";
 import { createAuditHttpHandler } from "./audit-http";
 import { AuditStore } from "./audit-store";
 import { createAuditPersistence } from "./audit-persistence";
+import { createExportHttpHandler } from "./export-http";
 import { createGraphHttpHandler } from "./graph-http";
 import { handleSyncCapabilitiesGet } from "./sync-capabilities-http";
 import { SYNC_PROTOCOL_VERSION } from "@slisync/sync-schema";
@@ -54,6 +55,7 @@ export function createSyncHttpServer(
 
   const auth = loadSyncAuthConfig();
 
+  let exportHttpHandler: ReturnType<typeof createExportHttpHandler> | null = null;
   let graphHttpHandler: ReturnType<typeof createGraphHttpHandler> | null = null;
   let auditHttpHandler: ReturnType<typeof createAuditHttpHandler> | null = null;
   let socketRedisAdapterActive = false;
@@ -86,6 +88,9 @@ export function createSyncHttpServer(
         return;
       }
       if (auditHttpHandler && (await auditHttpHandler(req, res))) {
+        return;
+      }
+      if (exportHttpHandler && (await exportHttpHandler(req, res))) {
         return;
       }
       if (graphHttpHandler && (await graphHttpHandler(req, res))) {
@@ -128,6 +133,7 @@ export function createSyncHttpServer(
   attachPresenceServer(io);
 
   auditHttpHandler = createAuditHttpHandler(auditStore, auth);
+  exportHttpHandler = createExportHttpHandler({ crdtRoomStore, auth });
   graphHttpHandler = createGraphHttpHandler({
     io,
     crdtRoomStore,

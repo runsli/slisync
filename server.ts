@@ -12,6 +12,7 @@ import {
   createPersistence,
   getLanIPv4Addresses,
   loadSyncAuthConfig,
+  createExportHttpHandler,
   createGraphHttpHandler,
   handleSyncCapabilitiesGet,
 } from "@slisync/sync-server";
@@ -39,6 +40,7 @@ const demoDefaultState = {
 };
 
 app.prepare().then(() => {
+  let exportHttpHandler: ReturnType<typeof createExportHttpHandler> | null = null;
   let graphHttpHandler: ReturnType<typeof createGraphHttpHandler> | null = null;
 
   const httpServer = createServer((req, res) => {
@@ -53,6 +55,9 @@ app.prepare().then(() => {
         path === "/sync/capabilities"
       ) {
         handleSyncCapabilitiesGet(req, res, { crdtAuthority: true });
+        return;
+      }
+      if (exportHttpHandler && (await exportHttpHandler(req, res))) {
         return;
       }
       if (graphHttpHandler && (await graphHttpHandler(req, res))) {
@@ -102,6 +107,7 @@ app.prepare().then(() => {
   attachGraphNotify(io, { auth });
   attachPresenceServer(io);
 
+  exportHttpHandler = createExportHttpHandler({ crdtRoomStore, auth });
   graphHttpHandler = createGraphHttpHandler({
     io,
     roomStore,
@@ -126,5 +132,6 @@ app.prepare().then(() => {
       `> Sync auth: ${auth.enabled ? "enabled" : "disabled (set SYNC_API_KEY + SYNC_AUTH_REQUIRED=1)"}`,
     );
     console.log(`> Graph HTTP: POST /v1/graphs/:roomId/ops`);
+    console.log(`> Export HTTP: GET /v1/rooms/:roomId/export/chunks`);
   });
 });

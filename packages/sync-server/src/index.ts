@@ -7,6 +7,13 @@ export {
 } from "./auth";
 export { loadAgentGraphPolicy } from "./agent-graph-policy-config";
 export { commitAgentWriteToRoom, type CommitAgentWriteDeps } from "./commit-agent-write";
+export {
+  createExportHttpHandler,
+  handleExportChunksGet,
+  parseExportChunksQueryParams,
+  parseExportChunksRoute,
+  type ExportHttpHandlerDeps,
+} from "./export-http";
 export { createGraphHttpHandler, type GraphHttpPostBody } from "./graph-http";
 export {
   parseGraphTraverseRoute,
