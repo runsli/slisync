@@ -156,3 +156,9 @@ npm test   # 64 cases
 ```
 
 环境变量：[.env.example](./.env.example)
+
+---
+
+## 许可
+
+采用 [MIT 许可证](LICENSE)。发布的 `@slisync/*` npm 包使用相同许可。

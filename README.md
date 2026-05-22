@@ -253,3 +253,9 @@ In-process ephemeral server: CRDT, HTTP graph, auth, presence, capabilities, off
 Next.js · TypeScript · Tailwind · Zustand · Socket.IO · Yjs · Redis (optional) · Node.js
 
 Future: WebRTC, PostgreSQL, IndexedDB — [docs/en/ROADMAP.md](./docs/en/ROADMAP.md).
+
+---
+
+## License
+
+Licensed under the [MIT License](LICENSE). Published `@slisync/*` packages use the same license.
