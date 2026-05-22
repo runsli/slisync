@@ -64,6 +64,7 @@ npm run dev
 | 4 | Open a second browser window on the same URL | Chunk content merges within seconds; scope bar shows **2** online |
 | 5 | In terminal 2, run **agent:push** below | Agent toasts at top and inside scoped memory panel |
 | 6 | DevTools → **Offline**, edit chunk → hard refresh → online | Edits survive ([local-first.md](./local-first.md)); use **clear local cache** to reset |
+| 7 | Click **导出 Markdown（HTTP）** on the scoped memory panel | Browser downloads `{room}-chunks.zip` (Accept: application/zip); toast confirms ([export-http.md](./export-http.md)) |
 
 **Note:** `message` / `counter` live under collapsed **legacy shared fields**, not the main narrative.
 
@@ -81,13 +82,12 @@ npm run agent:push -- --action summarize --append " [from agent]"
 
 The Demo footer includes a **copy** button for the same `agent:push` command. `graph:seed` uses `buildScopedMemoryOps(AGENT_ID, "ws-demo", "sess-demo")`.
 
-Export snapshot (**not** from IndexedDB yet — follow-up):
+Export snapshot (**server CRDT**, not IndexedDB):
 
-```bash
-npm run export:chunks
-```
+- Demo UI: **导出 Markdown（HTTP）** (same room / scope filters as the scope bar)
+- CLI: `npm run export:chunks:http` or `npm run export:chunks`
 
-Details: [export.md](./export.md).
+Details: [export.md](./export.md) · [export-http.md](./export-http.md).
 
 ---
 

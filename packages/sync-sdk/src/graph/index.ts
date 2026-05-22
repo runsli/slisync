@@ -33,8 +33,10 @@ export {
   appendExportChunksQuery,
   buildExportChunksHttpUrl,
   fetchExportChunksHttp,
+  fetchExportChunksZipHttp,
   type FetchExportChunksHttpOptions,
   type FetchExportChunksHttpResult,
+  type FetchExportChunksZipHttpResult,
 } from "./fetch-export-chunks-http";
 export {
   fetchAuditHttp,

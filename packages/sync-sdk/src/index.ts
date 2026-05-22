@@ -99,10 +99,12 @@ export {
 } from "./graph/fetch-graph-traverse-http";
 export {
   fetchExportChunksHttp,
+  fetchExportChunksZipHttp,
   buildExportChunksHttpUrl,
   appendExportChunksQuery,
   type FetchExportChunksHttpOptions,
   type FetchExportChunksHttpResult,
+  type FetchExportChunksZipHttpResult,
 } from "./graph/fetch-export-chunks-http";
 export {
   validateGraphOps,

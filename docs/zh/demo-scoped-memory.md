@@ -64,6 +64,7 @@ npm run dev
 | 4 | 再开一浏览器窗口访问同一 URL | 约数秒内看到相同 chunk 内容；ScopeBar 显示「本 room 在线 2 人」 |
 | 5 | 终端 2 执行下方 **agent:push** 命令 | 顶部与共享记忆区出现 Agent 活动提示；图/chunk 可能更新（若 push 含 graphOps） |
 | 6 | DevTools → Network → **Offline**，改 chunk → 硬刷新 → 恢复网络 | 编辑仍在（见 [local-first.md](./local-first.md)）；可点「清除本 room 本地缓存」重置 |
+| 7 | 点击共享记忆区的 **「导出 Markdown（HTTP）」** | 浏览器下载 `{room}-chunks.zip`（Accept: application/zip）；提示条确认（见 [export-http.md](./export-http.md)） |
 
 **说明：** `message` / `counter` 在「旧版共享字段演示」折叠区内，仅作 LWW/补丁对比，不是主路径。
 
@@ -83,13 +84,12 @@ npm run agent:push -- --action summarize --append " [from agent]"
 
 Demo 页底部提供**复制**按钮，命令与上一致。`graph:seed` 使用与 UI 相同的 `buildScopedMemoryOps(AGENT_ID, "ws-demo", "sess-demo")`。
 
-导出快照（**不**从 IndexedDB 读，follow-up）：
+导出快照（**服务端 CRDT**，非 IndexedDB）：
 
-```bash
-npm run export:chunks
-```
+- Demo：**导出 Markdown（HTTP）**（与 ScopeBar 相同 room / scope 过滤）
+- CLI：`npm run export:chunks:http` 或 `npm run export:chunks`
 
-详见 [export.md](./export.md)。
+详见 [export.md](./export.md) · [export-http.md](./export-http.md)。
 
 ---
 

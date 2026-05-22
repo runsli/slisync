@@ -1,4 +1,5 @@
 import type { IncomingMessage, ServerResponse } from "node:http";
+import archiver from "archiver";
 import type { ExportChunksHttpResponse, ExportChunksQuery } from "@slisync/sync-schema";
 import { exportMemoryChunksFromCrdtUpdate } from "@slisync/sync-sdk/graph";
 import { loadSyncAuthConfig, verifyAgentToken, type SyncAuthConfig } from "./auth";
@@ -11,6 +12,11 @@ export interface ExportHttpHandlerDeps {
   auth?: SyncAuthConfig;
 }
 
+export type ExportChunkFile = {
+  relativePath: string;
+  markdown: string;
+};
+
 export function parseExportChunksRoute(pathname: string | undefined): string | null {
   if (!pathname) return null;
   const patterns = [
@@ -22,6 +28,19 @@ export function parseExportChunksRoute(pathname: string | undefined): string | n
     if (match?.[1]) return decodeURIComponent(match[1]);
   }
   return null;
+}
+
+/** True when the client requests a zip archive via Accept: application/zip. */
+export function parseAcceptsZipExport(
+  acceptHeader: string | string[] | undefined,
+): boolean {
+  const raw = Array.isArray(acceptHeader)
+    ? acceptHeader.join(",")
+    : (acceptHeader ?? "");
+  return raw.split(",").some((part) => {
+    const value = part.trim().toLowerCase();
+    return value === "application/zip" || value.startsWith("application/zip;");
+  });
 }
 
 function parseBool(param: string | null): boolean | undefined {
@@ -54,6 +73,54 @@ export function parseExportChunksQueryParams(
     ...(minImportance !== undefined ? { minImportance } : {}),
     ...(includeDeleted !== undefined ? { includeDeleted } : {}),
   };
+}
+
+function safeZipBasename(roomId: string): string {
+  const cleaned = roomId.replace(/[^a-zA-Z0-9._-]+/g, "-").replace(/^-+|-+$/g, "");
+  return cleaned.length > 0 ? cleaned : "room";
+}
+
+/** Stream Markdown files as a zip (entry paths = relativePath). */
+export function streamExportChunksZip(
+  res: ServerResponse,
+  roomId: string,
+  files: ExportChunkFile[],
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const archive = archiver("zip", { zlib: { level: 9 } });
+    archive.on("error", reject);
+    res.on("finish", resolve);
+    res.on("close", resolve);
+
+    res.writeHead(200, {
+      "Content-Type": "application/zip",
+      "Content-Disposition": `attachment; filename="${safeZipBasename(roomId)}-chunks.zip"`,
+      "Cache-Control": "no-store",
+    });
+
+    archive.pipe(res);
+    for (const file of files) {
+      archive.append(file.markdown, { name: file.relativePath });
+    }
+    void archive.finalize();
+  });
+}
+
+async function loadExportChunkFiles(
+  deps: ExportHttpHandlerDeps,
+  roomId: string,
+  filters: ExportChunksQuery,
+): Promise<ExportChunkFile[]> {
+  const doc = await deps.crdtRoomStore.getOrCreate(roomId);
+  const update = deps.crdtRoomStore.snapshot(doc);
+  const sdkFiles = exportMemoryChunksFromCrdtUpdate(update, {
+    roomId,
+    ...filters,
+  });
+  return sdkFiles.map(({ relativePath, markdown }) => ({
+    relativePath,
+    markdown,
+  }));
 }
 
 /**
@@ -92,18 +159,16 @@ export function handleExportChunksGet(
     const host = req.headers.host ?? "localhost";
     const url = new URL(req.url ?? "/", `http://${host}`);
     const filters = parseExportChunksQueryParams(url.searchParams);
+    const wantsZip = parseAcceptsZipExport(req.headers.accept);
 
     try {
-      const doc = await deps.crdtRoomStore.getOrCreate(roomId);
-      const update = deps.crdtRoomStore.snapshot(doc);
-      const sdkFiles = exportMemoryChunksFromCrdtUpdate(update, {
-        roomId,
-        ...filters,
-      });
-      const files = sdkFiles.map(({ relativePath, markdown }) => ({
-        relativePath,
-        markdown,
-      }));
+      const files = await loadExportChunkFiles(deps, roomId, filters);
+
+      if (wantsZip) {
+        await streamExportChunksZip(res, roomId, files);
+        return true;
+      }
+
       const body: ExportChunksHttpResponse = {
         ok: true,
         roomId,

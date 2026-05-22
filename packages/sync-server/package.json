@@ -40,12 +40,14 @@
     "@slisync/sync-sdk": "^0.1.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "fast-json-patch": "^3.1.1",
+    "archiver": "^7.0.1",
     "ioredis": "^5.10.1",
     "pg": "^8.16.0",
     "socket.io": "^4.8.3",
     "yjs": "^13.6.30"
   },
   "devDependencies": {
+    "@types/archiver": "^6.0.3",
     "@types/pg": "^8.15.5",
     "tsx": "^4.22.3"
   }

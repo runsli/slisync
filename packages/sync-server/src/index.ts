@@ -10,8 +10,10 @@ export { commitAgentWriteToRoom, type CommitAgentWriteDeps } from "./commit-agen
 export {
   createExportHttpHandler,
   handleExportChunksGet,
+  parseAcceptsZipExport,
   parseExportChunksQueryParams,
   parseExportChunksRoute,
+  type ExportChunkFile,
   type ExportHttpHandlerDeps,
 } from "./export-http";
 export { createGraphHttpHandler, type GraphHttpPostBody } from "./graph-http";

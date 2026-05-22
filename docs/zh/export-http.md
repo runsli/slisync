@@ -63,7 +63,28 @@
 
 ---
 
-## 成功响应
+## Accept 头
+
+| Accept | 响应 |
+|--------|------|
+| 默认 / `application/json` | JSON `ExportChunksHttpResponse` |
+| `application/zip` | 流式 zip；条目路径 = `relativePath`，内容为 `markdown` |
+
+zip 示例：
+
+```bash
+curl -sS \
+  -H "X-Sync-Protocol-Version: 1" \
+  -H "Accept: application/zip" \
+  "http://127.0.0.1:3000/v1/rooms/example-room/export/chunks" \
+  -o example-room-chunks.zip
+```
+
+SDK：`fetchExportChunksZipHttp()` · Demo 按钮使用 `Accept: application/zip`。
+
+---
+
+## 成功响应（JSON）
 
 `Content-Type: application/json`
 
@@ -93,7 +114,10 @@
 ## SDK（Phase 2）
 
 ```ts
-import { fetchExportChunksHttp } from "@slisync/sync-sdk/graph";
+import {
+  fetchExportChunksHttp,
+  fetchExportChunksZipHttp,
+} from "@slisync/sync-sdk/graph";
 
 const result = await fetchExportChunksHttp({
   baseUrl: "http://127.0.0.1:3000",
@@ -106,6 +130,13 @@ if (result.ok) {
   for (const file of result.files) {
     console.log(file.relativePath, file.markdown.slice(0, 80));
   }
+}
+```
+
+```ts
+const zip = await fetchExportChunksZipHttp({ roomId: "example-room" });
+if (zip.ok) {
+  // zip.blob 保存为 zip.filename
 }
 ```
 

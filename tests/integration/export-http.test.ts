@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
+import { unzipSync } from "fflate";
 import type { ExportChunksHttpResponse } from "@slisync/sync-schema";
 import {
   buildScopedMemoryOps,
@@ -91,6 +92,43 @@ describe("export HTTP integration", () => {
     assert.equal(sdk.roomId, raw.body.roomId);
     assert.equal(sdk.count, raw.body.count);
     assert.deepEqual(sdk.files, raw.body.files);
+  });
+
+  it("GET export with Accept zip returns archive with memory_chunk md", async () => {
+    const roomId = uniqueRoom("export-zip");
+    const seed = await pushGraphOpsHttp({
+      baseUrl,
+      roomId,
+      agentId: "export-agent",
+      action: "seed_scoped_memory",
+      graphOps: buildScopedMemoryOps("export-agent"),
+    });
+    assert.equal(seed.ok, true);
+
+    const res = await fetch(
+      `${baseUrl}/v1/rooms/${encodeURIComponent(roomId)}/export/chunks`,
+      {
+        method: "GET",
+        headers: withSyncProtocolHeaders({ Accept: "application/zip" }),
+      },
+    );
+
+    assert.equal(res.status, 200);
+    assert.match(
+      res.headers.get("Content-Type") ?? "",
+      /application\/zip/i,
+    );
+
+    const zipBytes = new Uint8Array(await res.arrayBuffer());
+    assert.ok(zipBytes.length >= 4);
+    assert.equal(zipBytes[0], 0x50);
+    assert.equal(zipBytes[1], 0x4b);
+
+    const entries = unzipSync(zipBytes);
+    const mdPaths = Object.keys(entries).filter((p) => p.endsWith(".md"));
+    assert.ok(mdPaths.length >= 1);
+    const text = new TextDecoder().decode(entries[mdPaths[0]!]!);
+    assert.match(text, /kind:\s*memory_chunk/);
   });
 
   it("GET export returns count 0 for empty room", async () => {

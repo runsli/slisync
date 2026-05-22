@@ -63,7 +63,28 @@ Clients should send **`X-Sync-Protocol-Version`** (see `SYNC_PROTOCOL_HEADER` in
 
 ---
 
-## Response (success)
+## Accept header
+
+| Accept | Response |
+|--------|----------|
+| (default) / `application/json` | JSON `ExportChunksHttpResponse` |
+| `application/zip` | Streaming zip; each entry path = `relativePath`, body = `markdown` |
+
+Zip example:
+
+```bash
+curl -sS \
+  -H "X-Sync-Protocol-Version: 1" \
+  -H "Accept: application/zip" \
+  "http://127.0.0.1:3000/v1/rooms/example-room/export/chunks" \
+  -o example-room-chunks.zip
+```
+
+SDK: `fetchExportChunksZipHttp()` · Demo UI sends `Accept: application/zip`.
+
+---
+
+## Response (success, JSON)
 
 `Content-Type: application/json`
 
@@ -93,7 +114,10 @@ Types: `ExportChunksHttpSuccess`, `ExportChunksHttpFile`, `ExportChunksHttpRespo
 ## SDK (Phase 2)
 
 ```ts
-import { fetchExportChunksHttp } from "@slisync/sync-sdk/graph";
+import {
+  fetchExportChunksHttp,
+  fetchExportChunksZipHttp,
+} from "@slisync/sync-sdk/graph";
 
 const result = await fetchExportChunksHttp({
   baseUrl: "http://127.0.0.1:3000",
@@ -106,6 +130,13 @@ if (result.ok) {
   for (const file of result.files) {
     console.log(file.relativePath, file.markdown.slice(0, 80));
   }
+}
+```
+
+```ts
+const zip = await fetchExportChunksZipHttp({ roomId: "example-room" });
+if (zip.ok) {
+  // zip.blob → save as zip.filename
 }
 ```
 

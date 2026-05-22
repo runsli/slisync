@@ -90,3 +90,52 @@ export async function fetchExportChunksHttp(
 
   return { ...body, status: res.status };
 }
+
+export type FetchExportChunksZipHttpResult =
+  | { ok: true; blob: ArrayBuffer; filename: string; status?: number }
+  | { ok: false; error: string; status?: number };
+
+/**
+ * Download memory_chunk export as a zip archive (Accept: application/zip).
+ * Entry paths inside the zip match SDK relativePath layout.
+ */
+export async function fetchExportChunksZipHttp(
+  options: FetchExportChunksHttpOptions,
+): Promise<FetchExportChunksZipHttpResult> {
+  const { baseUrl, roomId, workspaceId, sessionId, minImportance, includeDeleted } =
+    options;
+  const root = getSyncHttpBase(baseUrl);
+  const token = options.token ?? getAgentSyncToken();
+
+  const url = buildExportChunksHttpUrl(root, roomId, {
+    workspaceId,
+    sessionId,
+    minImportance,
+    includeDeleted,
+  });
+
+  const headers = withSyncProtocolHeaders({
+    Accept: "application/zip",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  });
+
+  const res = await fetch(url, { method: "GET", headers });
+
+  if (!res.ok) {
+    let error = `export failed (${res.status})`;
+    try {
+      const body = (await res.json()) as { error?: string };
+      if (body.error) error = body.error;
+    } catch {
+      /* non-JSON error body */
+    }
+    return { ok: false, error, status: res.status };
+  }
+
+  const disposition = res.headers.get("Content-Disposition") ?? "";
+  const match = disposition.match(/filename="([^"]+)"/);
+  const filename = match?.[1] ?? `${roomId}-chunks.zip`;
+  const blob = await res.arrayBuffer();
+
+  return { ok: true, blob, filename, status: res.status };
+}

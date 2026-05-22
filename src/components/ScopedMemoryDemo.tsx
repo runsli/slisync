@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  fetchExportChunksZipHttp,
   filterNodesByScope,
+  getAgentSyncToken,
   useMemoryGraph,
   type AgentActivityPayload,
 } from "@slisync/sync-sdk";
@@ -42,6 +44,19 @@ export type ScopedMemoryDemoProps = {
 
 type DemoTab = "memory" | "tasks";
 
+type ExportToast = { kind: "ok" | "error"; text: string };
+
+/** Trigger browser download of a zip blob returned by the export HTTP API. */
+function downloadZipBlob(blob: ArrayBuffer, filename: string) {
+  const zipBlob = new Blob([blob], { type: "application/zip" });
+  const url = URL.createObjectURL(zipBlob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
 /** Primary demo shell: scoped memory graph navigation + chunk editor. */
 export function ScopedMemoryDemo({
   graphId,
@@ -68,6 +83,8 @@ export function ScopedMemoryDemo({
   const [welcomeDismissed, setWelcomeDismissed] = useState(false);
   const [activeTab, setActiveTab] = useState<DemoTab>("memory");
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [exportToast, setExportToast] = useState<ExportToast | null>(null);
+  const [exportBusy, setExportBusy] = useState(false);
 
   useEffect(() => {
     try {
@@ -191,6 +208,49 @@ export function ScopedMemoryDemo({
 
   const isEmpty = activeNodes.length === 0;
 
+  /** Pull memory_chunk Markdown from the sync server as a zip download. */
+  const exportMarkdownHttp = useCallback(async () => {
+    setExportToast(null);
+    setExportBusy(true);
+    try {
+      const baseUrl =
+        typeof window !== "undefined" ? window.location.origin : undefined;
+      const result = await fetchExportChunksZipHttp({
+        roomId: graphId,
+        baseUrl,
+        token: getAgentSyncToken(),
+        workspaceId: scope.workspaceId,
+        sessionId: scope.sessionId,
+      });
+      if (!result.ok) {
+        setExportToast({
+          kind: "error",
+          text: result.error || "导出失败",
+        });
+        return;
+      }
+      if (result.blob.byteLength < 4) {
+        setExportToast({
+          kind: "error",
+          text: "当前 scope 下没有可导出的 memory_chunk，请先初始化演示数据或运行 npm run graph:seed",
+        });
+        return;
+      }
+      downloadZipBlob(result.blob, result.filename);
+      setExportToast({
+        kind: "ok",
+        text: `已下载 ${result.filename}（zip，含当前 scope 下全部 memory_chunk）`,
+      });
+    } catch (err) {
+      setExportToast({
+        kind: "error",
+        text: err instanceof Error ? err.message : "导出请求失败",
+      });
+    } finally {
+      setExportBusy(false);
+    }
+  }, [graphId, scope.workspaceId, scope.sessionId]);
+
   return (
     <section className="space-y-4 rounded-xl border border-violet-200/80 bg-violet-50/30 p-4 dark:border-violet-900/40 dark:bg-violet-950/20">
       <div className="space-y-1">
@@ -289,6 +349,42 @@ export function ScopedMemoryDemo({
         presenceMembers={presenceMembers}
         syncReady={syncReady}
       />
+
+      {activeTab === "memory" ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={!syncReady || exportBusy}
+            onClick={() => void exportMarkdownHttp()}
+            className="rounded-lg border border-violet-300 bg-white px-3 py-1.5 text-sm font-medium text-violet-900 hover:bg-violet-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-violet-700 dark:bg-violet-950/40 dark:text-violet-100 dark:hover:bg-violet-900/50"
+          >
+            {exportBusy ? "导出中…" : "导出 Markdown（HTTP）"}
+          </button>
+          <span className="text-xs text-violet-800/70 dark:text-violet-200/70">
+            room={graphId} · Accept: application/zip
+          </span>
+        </div>
+      ) : null}
+
+      {exportToast ? (
+        <div
+          role="status"
+          className={`rounded-lg border px-3 py-2 text-sm ${
+            exportToast.kind === "ok"
+              ? "border-emerald-300 bg-emerald-50 text-emerald-950 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100"
+              : "border-red-300 bg-red-50 text-red-950 dark:border-red-800 dark:bg-red-950/50 dark:text-red-100"
+          }`}
+        >
+          {exportToast.text}
+          <button
+            type="button"
+            className="ml-2 text-xs underline opacity-80"
+            onClick={() => setExportToast(null)}
+          >
+            关闭
+          </button>
+        </div>
+      ) : null}
 
       {activeTab === "memory" ? (
         isEmpty ? (
